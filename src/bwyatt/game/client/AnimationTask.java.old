@@ -1,0 +1,54 @@
+package bwyatt.game.client;
+
+public abstract class AnimationTask
+{
+    protected long tickDelta;
+    protected long nextTick;
+    protected boolean canceled;
+    protected AnimationTask nextTask;
+
+    public AnimationTask(long tickDelta)
+    {
+        this.tickDelta = tickDelta;
+        this.canceled = false;
+        this.nextTick = 0;
+        this.nextTask = null;
+    }
+
+    public long getTickDelta()
+    {
+        return this.tickDelta;
+    }
+
+    public void setNextTick(long nextTick)
+    {
+        this.nextTick = nextTick;
+    }
+
+    public long getNextTick()
+    {
+        return nextTick;
+    }
+
+    public void cancel()
+    {
+        this.canceled = true;
+    }
+
+    public boolean isCanceled()
+    {
+        return this.canceled;
+    }
+
+    public void setNextTask(AnimationTask nextTask)
+    {
+        this.nextTask = nextTask;
+    }
+
+    public AnimationTask getNextTask()
+    {
+        return this.nextTask;
+    }
+
+    public abstract void run();
+}

@@ -1,0 +1,113 @@
+package bwyatt.game.client;
+
+import java.util.*;
+
+/*
+ * Synchronized to prevent issues with the task list
+ */
+public class Animator extends Thread
+{
+    protected boolean die;
+    protected LinkedList<AnimationTask> tasks;
+    protected static Animator instance;
+
+    protected Animator()
+    {
+        this.die = false;
+        tasks = new LinkedList<AnimationTask>();
+    }
+
+    public static void init()
+    {
+        instance = new Animator();
+        instance.start();
+    }
+
+    public static void die()
+    {
+        synchronized (instance)
+        {
+            instance.die = true;   
+            instance.notify();
+            try
+            {
+                instance.join();
+            }
+            catch (InterruptedException e) { }
+        }
+    }
+
+    public static void scheduleNow(AnimationTask newTask)
+    {
+        synchronized (instance)
+        {
+            instance.tasks.add(newTask);
+            instance.notify();
+        }
+    }
+
+    /*
+     * some GUI elements need to wait for the previous animation to complete
+     */
+    public static void scheduleAfter(AnimationTask newTask, AnimationTask prevTask)
+    {
+        synchronized(instance)
+        {
+            if (!prevTask.isCanceled())
+            {
+                prevTask.setNextTask(newTask);
+            }
+            instance.tasks.add(newTask);
+            instance.notify();
+        }
+    }
+
+    public void run()
+    {
+        synchronized (instance)
+        {
+            long nextTick;
+            long now;
+            Iterator<AnimationTask> iterator;
+            AnimationTask task;
+            while (!this.die)
+            {
+                nextTick = Long.MAX_VALUE;
+                now = System.nanoTime() / 1000;
+                
+                for (iterator = this.tasks.iterator(); iterator.hasNext(); )
+                {
+                    task = iterator.next();
+                    if (task.getNextTick() - now < 0)
+                    {
+                        task.run();
+                        long tick = now + task.getTickDelta();
+                        task.setNextTick(tick);
+                    }
+                    if (task.isCanceled())
+                    {
+                        AnimationTask nextTask = task.getNextTask();
+                        if (nextTask != null)
+                        {
+                            nextTask.setNextTick(0);
+                        }
+                        iterator.remove();
+                    }
+                    else if (task.getNextTick() - nextTick < 0)
+                    {
+                        nextTick = task.getNextTick();
+                    }
+                }
+                long waitTime = nextTick - System.nanoTime() / 1000;
+                if (waitTime > 0)
+                {
+                    try
+                    {
+                        this.wait(waitTime);
+                    }
+                    catch (InterruptedException e) { }
+                }
+            }
+        }
+    }
+}
