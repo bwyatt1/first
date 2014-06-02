@@ -1,61 +1,43 @@
-<project>
-    <path id="classpath">
-        <pathelement path="/home/bill/opt/jdk1.7.0_60/jre/lib/jfxrt.jar"/>
+<project name="Boggle" basedir=".">
+
+    <path id="project.classpath">
+        <pathelement path="/home/bill/opt/jdk1.7.0_60/jre/lib/jfxrt.jar" />
     </path>
 
-    <target name="clean">
-        <delete dir="build"/>
-    </target>
-
     <target name="compile">
-        <mkdir dir="build/classes"/>
-        <javac includeantruntime="false" srcdir="src" destdir="build/classes"
-               classpathref="classpath" debug="true" debuglevel="lines,vars,source">
+        <mkdir dir="build/classes" />
+        <javac includeantruntime="false" srcdir="src" destdir="build/classes">
+            <classpath refid="project.classpath" />
         </javac>
     </target>
 
     <target name="jar" depends="compile">
         <mkdir dir="build/jar"/>
-        <jar destfile="build/jar/Boggle.jar" basedir="build/classes">
+        <jar jarfile="build/jar/Boggle.jar" basedir="build/classes">
             <manifest>
-                <attribute name="Main-Class" value="bwyatt.game.client.GameFrame"/>
+                <attribute name="Main-Class" value="bwyatt.game.client.GameFrame" />
             </manifest>
-            <fileset dir="src">
-                <include name="bwyatt/game/client/resource/*"/>
-            </fileset>
+            <fileset dir="src" includes="bwyatt/game/client/resource/*"/>
+            <zipgroupfileset dir="/home/bill/opt/jdk1.7.0_60/" includes="jre/lib/jfxrt.jar" />
         </jar>
     </target>
 
     <target name="client" depends="jar">
-        <java classname="bwyatt.game.client.GameFrame" fork="true">
-            <classpath>
-                <path refid="classpath"/>
-                <path location="build/jar/Boggle.jar"/>
-            </classpath>
+        <java jar="build/jar/Boggle.jar" fork="true">
+            <classpath refid="project.classpath"/>
         </java>
     </target>
 
-    <target name="server" depends="jar">
-        <mkdir dir="build/jar"/>
-        <jar destfile="build/jar/BoggleServer.jar" basedir="build/classes">
+    <target name="server" depends="compile">
+        <jar jarfile="build/jar/BoggleServer.jar" basedir="build/classes">
             <manifest>
-                <attribute name="Main-Class" value="bwyatt.game.server.GameServer"/>
+                <attribute name="Main-Class" value="bwyatt.game.server.GameServer" />
             </manifest>
         </jar>
-        <java classpath="build/jar/BoggleServer.jar" fork="false"
-              classname="bwyatt.game.server.GameServer"/>
+        <java jar="build/jar/BoggleServer.jar" fork="true" />
     </target>
 
-    <target name="production" depends="compile">
-        <mkdir dir="build/jar"/>
-        <jar destfile="build/jar/Boggle.jar" basedir="build/classes">
-            <zipgroupfileset dir="/home/bill/opt/jdk1.7.0_60/jre/lib" includes="jfxrt.jar"/>
-            <manifest>
-                <attribute name="Main-Class" value="bwyatt.game.client.GameFrame"/>
-            </manifest>
-            <fileset dir="src">
-                <include name="bwyatt/game/client/resource/*"/>
-            </fileset>
-        </jar>
+    <target name="clean">
+        <delete dir="build"/>
     </target>
 </project>
