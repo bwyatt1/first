@@ -138,48 +138,9 @@ public class BogglePanel extends JPanel
         );
     }
 
-    public JMenu createMenu(GameFrame gameFrame)
+    public void navBack()
     {
-        this.parent = gameFrame;
-        JMenu boggleMenu = new JMenu("Boggle");
-        boggleMenu.setMnemonic('B');
-        JMenuItem boggleNewItem = new JMenuItem("New");
-        boggleNewItem.setMnemonic('N');
-        boggleNewItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK));
-        boggleNewItem.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    newGame();
-                }
-            }
-        );
-        JMenuItem boggleCloseItem = new JMenuItem("Close");
-        boggleCloseItem.setMnemonic('C');
-        boggleCloseItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
-        boggleCloseItem.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    parent.closeBoggle();
-                }
-            }
-        );
-        JMenuItem boggleExitItem = new JMenuItem("Exit");
-        boggleExitItem.setMnemonic('X');
-        boggleExitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
-        boggleExitItem.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    parent.close();
-                }
-            }
-        );
-        boggleMenu.add(boggleNewItem);
-        boggleMenu.add(boggleCloseItem);
-        boggleMenu.add(boggleExitItem);
-        return boggleMenu;
+        parent.navHome();
     }
 
     public void newGame()

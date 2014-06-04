@@ -88,51 +88,18 @@ public class Twenty48Panel extends JPanel implements ActionListener
 
     }
 
-    public JMenu createMenu()
+    public void navBack()
     {
-        JMenu twenty48Menu = new JMenu("2048");
-        twenty48Menu.setMnemonic('2');
-        JMenuItem newItem = new JMenuItem("New");
-        newItem.setMnemonic('N');
-        newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK));
-        newItem.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    if (gameOn == GAME_SOLO || gameOn == GAME_MULTI)
-                        gameOver();
-                    showStartupPanel();
-                }
-            }
-        );
-        JMenuItem closeItem = new JMenuItem("Close");
-        closeItem.setMnemonic('C');
-        closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
-        closeItem.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    if (gameOn == GAME_SOLO || gameOn == GAME_MULTI)
-                        gameOver();
-                    parent.close2048();
-                }
-            }
-        );
-        JMenuItem exitItem = new JMenuItem("Exit");
-        exitItem.setMnemonic('X');
-        exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
-        exitItem.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    parent.close();
-                }
-            }
-        );
-        twenty48Menu.add(newItem);
-        twenty48Menu.add(closeItem);
-        twenty48Menu.add(exitItem);
-        return twenty48Menu;
+        if (gameOn == GAME_NONE)
+        {
+            parent.navHome();
+        }
+        else
+        {
+            if (gameOn != GAME_OVER)
+                gameOver();
+            showStartupPanel();
+        }
     }
 
     public void showStartupPanel()

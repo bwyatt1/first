@@ -12,8 +12,9 @@ import bwyatt.game.common.*;
 /*
  * Primary GUI class for the client
  */
-public class GameFrame extends JFrame
+public class GameFrame extends JFrame implements ActionListener, MouseListener
 {
+    private JPanel gamesPanel;
     private BogglePanel bogglePanel;
     private Twenty48Panel twenty48Panel;
     private GameSocketThread socketThread;
@@ -23,8 +24,12 @@ public class GameFrame extends JFrame
     private PlayerInfo myInfo;
     private ChatBoxPanel chatBoxPanel;
     private JTextField chatInput;
+    private JLabel boggleLabel;
+    private JLabel twenty48Label;
+    private JLabel backLabel;
+    private JLabel homeLabel;
+    private JLabel settingsLabel;
     private Config config;
-    private JMenu editMenu;
     private PreferencesPane preferencesPane;
     private JSplitPane splitPane;
 
@@ -44,20 +49,31 @@ public class GameFrame extends JFrame
         playerPanel = new PlayerPanel();
         chatBoxPanel = new ChatBoxPanel();
         chatInput = new JTextField();
-        chatInput.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    sendChat();
-                }
-            }
-        );
+        chatInput.addActionListener(this);
+
+        backLabel = new JLabel(ImageCache.getSmallLetter('B'));
+        backLabel.addMouseListener(this);
+        homeLabel = new JLabel(ImageCache.getSmallLetter('H'));
+        homeLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        homeLabel.addMouseListener(this);
+        settingsLabel = new JLabel(ImageCache.getSmallLetter('S'));
+        settingsLabel.addMouseListener(this);
+
+        JPanel navPanel = new JPanel();
+        navPanel.setLayout(new BorderLayout());
+        navPanel.add(backLabel, BorderLayout.WEST);
+        navPanel.add(homeLabel, BorderLayout.CENTER);
+        navPanel.add(settingsLabel, BorderLayout.EAST);
 
         JPanel chatPanel = new JPanel();
         SpringLayout chatLayout = new SpringLayout();
         chatPanel.setLayout(chatLayout);
+        chatPanel.add(navPanel);
+        chatLayout.putConstraint(SpringLayout.NORTH, navPanel, 5, SpringLayout.NORTH, chatPanel);
+        chatLayout.putConstraint(SpringLayout.WEST, navPanel, 5, SpringLayout.WEST, chatPanel);
+        chatLayout.putConstraint(SpringLayout.EAST, navPanel, -5, SpringLayout.EAST, chatPanel);
         chatPanel.add(playerPanel);
-        chatLayout.putConstraint(SpringLayout.NORTH, playerPanel, 5, SpringLayout.NORTH, chatPanel);
+        chatLayout.putConstraint(SpringLayout.NORTH, playerPanel, 5, SpringLayout.SOUTH, navPanel);
         chatLayout.putConstraint(SpringLayout.WEST, playerPanel, 5, SpringLayout.WEST, chatPanel);
         chatLayout.putConstraint(SpringLayout.EAST, playerPanel, -5, SpringLayout.EAST, chatPanel);
         chatPanel.add(chatBoxPanel);
@@ -166,100 +182,31 @@ public class GameFrame extends JFrame
     public void showGames()
     {
         this.setTitle("Bill's Games");
-        JLabel boggleLabel = new JLabel();
+
+        gamesPanel = new JPanel();
+        boggleLabel = new JLabel();
         boggleLabel.setIcon(ImageCache.getLargeLetter('B'));
         boggleLabel.setText("Boggle");
         boggleLabel.setHorizontalTextPosition(SwingConstants.CENTER);
         boggleLabel.setVerticalTextPosition(SwingConstants.BOTTOM);
-        boggleLabel.addMouseListener(new MouseAdapter()
-            {
-                public void mouseClicked(MouseEvent e)
-                {
-                    startBoggle();
-                }
-            }
-        );
+        boggleLabel.addMouseListener(this);
         
-        JLabel twenty48Label = new JLabel();
+        twenty48Label = new JLabel();
         twenty48Label.setIcon(ImageCache.getTwenty48Tile(10));
         twenty48Label.setText("2048");
         twenty48Label.setHorizontalTextPosition(SwingConstants.CENTER);
         twenty48Label.setVerticalTextPosition(SwingConstants.BOTTOM);
-        twenty48Label.addMouseListener(new MouseAdapter()
-            {
-                public void mouseClicked(MouseEvent e)
-                {
-                    start2048();
-                }
-            }
-        );
+        twenty48Label.addMouseListener(this);
 
-        activePanel.setLayout(new FlowLayout());
+        gamesPanel.setLayout(new FlowLayout());
         boggleLabel.setSize(boggleLabel.getPreferredSize());
         twenty48Label.setSize(twenty48Label.getPreferredSize());
-        activePanel.add(boggleLabel);
-        activePanel.add(twenty48Label);
+        gamesPanel.add(boggleLabel);
+        gamesPanel.add(twenty48Label);
 
-        JMenu gameMenu = new JMenu("Game");
-        gameMenu.setMnemonic('G');
-        JMenuItem gameBoggleItem = new JMenuItem("Boggle");
-        gameBoggleItem.setMnemonic('B');
-        gameBoggleItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_DOWN_MASK));
-        gameBoggleItem.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    startBoggle();
-                }
-            }
-        );
-
-        JMenuItem game2048Item = new JMenuItem("2048");
-        game2048Item.setMnemonic('2');
-        game2048Item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_DOWN_MASK));
-        game2048Item.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    start2048();
-                }
-            }
-        );
-
-        JMenuItem gameExitItem = new JMenuItem("Exit");
-        gameExitItem.setMnemonic('X');
-        gameExitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
-        gameExitItem.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    close();
-                }
-            }
-        );
-
-        this.editMenu = new JMenu("Edit");
-        editMenu.setMnemonic('E');
-        JMenuItem editPrefItem = new JMenuItem("Preferences");
-        editPrefItem.setMnemonic('P');
-        editPrefItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_COMMA, InputEvent.CTRL_DOWN_MASK));
-        editPrefItem.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    showPreferences();
-                }
-            }
-        );
-
-        JMenuBar jmenubar = new JMenuBar();
-        gameMenu.add(gameBoggleItem);
-        gameMenu.add(game2048Item);
-        gameMenu.add(gameExitItem);
-        jmenubar.add(gameMenu);
-        editMenu.add(editPrefItem);
-        jmenubar.add(editMenu);
-        this.setJMenuBar(jmenubar);
+        activePanel.removeAll();
+        activePanel.setLayout(new GridLayout(1, 1));
+        activePanel.add(gamesPanel); 
 
         this.revalidate();
         this.repaint();
@@ -271,11 +218,20 @@ public class GameFrame extends JFrame
         InputMap inputMap = activePanel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         ActionMap actionMap = activePanel.getActionMap();
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, 0), "slash");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "ctrl-q");
         actionMap.put("slash", new AbstractAction()
             {
                 public void actionPerformed(ActionEvent e)
                 {
                     chatInput.requestFocusInWindow();
+                }
+            }
+        );
+        actionMap.put("ctrl-q", new AbstractAction()
+            {
+                public void actionPerformed(ActionEvent e)
+                {
+                    close();
                 }
             }
         );
@@ -365,18 +321,54 @@ public class GameFrame extends JFrame
         preferencesPane.setVisible(true);
     }
 
+    public void navHome()
+    {
+        if (gamesPanel != null)
+        {
+            return;
+        }
+        else if (twenty48Panel != null)
+        {
+            twenty48Panel.removeAll();
+            twenty48Panel = null;
+            showGames();
+        }
+        else if (bogglePanel != null)
+        {
+            bogglePanel.removeAll();
+            bogglePanel = null;
+            showGames();
+        }
+
+        Message message = new Message();
+        message.setType(Message.MT_PLAYER_SHOWING_GAME);
+        message.setFromID(myInfo.getID());
+        message.setVal(PlayerInfo.GAME_NONE);
+        socketThread.sendMessage(message);
+    }
+
+    public void navBack()
+    {
+        if (twenty48Panel != null)
+        {
+            twenty48Panel.navBack();
+        }
+        else if (bogglePanel != null)
+        {
+            bogglePanel.navBack();
+        }
+    }
+
     /*
      * load the boggle panel and inform the server
      */
     public void startBoggle()
     {
-        this.bogglePanel = new BogglePanel();
-        JMenuBar jmenubar = new JMenuBar();
-        jmenubar.add(bogglePanel.createMenu(this));
-        jmenubar.add(editMenu);
-        this.setJMenuBar(jmenubar);
-        bogglePanel.newGame();
         activePanel.removeAll();
+        gamesPanel = null;
+
+        this.bogglePanel = new BogglePanel();
+        bogglePanel.newGame();
         activePanel.setLayout(new GridLayout(1, 1));
         activePanel.add(bogglePanel); 
         this.revalidate();
@@ -390,29 +382,15 @@ public class GameFrame extends JFrame
         socketThread.sendMessage(message);
     }
 
-    public void closeBoggle()
-    {
-        this.activePanel.removeAll();
-        this.bogglePanel = null;
-        this.showGames();
-        
-        Message message = new Message();
-        message.setType(Message.MT_PLAYER_SHOWING_GAME);
-        message.setFromID(myInfo.getID());
-        message.setVal(PlayerInfo.GAME_NONE);
-        socketThread.sendMessage(message);
-    }
-
     /*
      * load the 2048 panel and inform the server
      */
     public void start2048()
     {
+        activePanel.removeAll();
+        gamesPanel = null;
+
         twenty48Panel = new Twenty48Panel(myInfo, players, this);
-        JMenuBar jmenubar = new JMenuBar();
-        jmenubar.add(twenty48Panel.createMenu());
-        jmenubar.add(editMenu);
-        this.setJMenuBar(jmenubar);
         activePanel.removeAll();
         activePanel.setLayout(new GridLayout(1, 1));
         activePanel.add(twenty48Panel);
@@ -424,30 +402,6 @@ public class GameFrame extends JFrame
         message.setType(Message.MT_PLAYER_SHOWING_GAME);
         message.setFromID(myInfo.getID());
         message.setVal(PlayerInfo.GAME_2048);
-        socketThread.sendMessage(message);
-    }
-
-    /*
-     * Reset player game status and gui
-     */
-    public void close2048()
-    {
-        this.activePanel.removeAll();
-        this.twenty48Panel = null;
-        this.showGames();
-
-        myInfo.setRoomID(0);
-        myInfo.setStatus(PlayerInfo.STATUS_NONE);
-        Message message = new Message();
-        message.setType(Message.MT_PLAYER_ROOM_CHANGE);
-        message.setFromID(myInfo.getID());
-        message.setPlayerInfo(myInfo);
-        socketThread.sendMessage(message);
-
-        message = new Message();
-        message.setType(Message.MT_PLAYER_SHOWING_GAME);
-        message.setFromID(myInfo.getID());
-        message.setVal(PlayerInfo.GAME_NONE);
         socketThread.sendMessage(message);
     }
 
@@ -512,22 +466,54 @@ public class GameFrame extends JFrame
         socketThread.sendMessage(message);
     }
 
-    public void sendChat()
+    public void actionPerformed(ActionEvent e)
     {
-        String chatText = chatInput.getText();
-        if (!chatText.equals(""))
+        if (e.getSource() == chatInput)
         {
-            Message message = new Message(Message.MT_CHAT, myInfo.getID(), chatText);
-            socketThread.sendMessage(message);
-            chatInput.setText("");
+            String chatText = chatInput.getText();
+            if (!chatText.equals(""))
+            {
+                Message message = new Message(Message.MT_CHAT, myInfo.getID(), chatText);
+                socketThread.sendMessage(message);
+                chatInput.setText("");
+            }
+            if (this.twenty48Panel != null)
+                twenty48Panel.requestFocusInWindow();
+            else if (this.bogglePanel != null)
+                bogglePanel.requestFocusInWindow();
+            else
+                activePanel.requestFocusInWindow();
         }
-        if (this.twenty48Panel != null)
-            twenty48Panel.requestFocusInWindow();
-        else if (this.bogglePanel != null)
-            bogglePanel.requestFocusInWindow();
-        else
-            activePanel.requestFocusInWindow();
     }
+
+    public void mouseClicked(MouseEvent e)
+    {
+        if (e.getSource() == boggleLabel)
+        {
+            startBoggle();
+        }
+        else if (e.getSource() == twenty48Label)
+        {
+            start2048();
+        }
+        else if (e.getSource() == backLabel)
+        {
+            navBack();
+        }
+        else if (e.getSource() == homeLabel)
+        {
+            navHome();
+        }
+        else if (e.getSource() == settingsLabel)
+        {
+            showPreferences();
+        }
+    }
+
+    public void mousePressed(MouseEvent e) {}
+    public void mouseReleased(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {}
 
     /*
      * Primary event handling for messages from the server
