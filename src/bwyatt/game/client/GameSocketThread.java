@@ -150,7 +150,7 @@ public class GameSocketThread extends Thread
         {
             try
             {
-                ByteBuffer buf = message.create();
+                ByteBuffer buf = message.assemble();
                 System.out.print("Write (" + buf.limit() + "):");
                 Message.printBytes(buf.array(), 0, buf.limit());
                 System.out.flush();

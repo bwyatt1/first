@@ -5,8 +5,11 @@ import java.util.*;
 public class Twenty48Board
 {
     private int[][] board;
+    private int score;
+    private int highTile;
 
     private final static int BLANK = -1;
+    private final static int SCORE_LUT[] = {0, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
 
     public Twenty48Board()
     {
@@ -19,19 +22,16 @@ public class Twenty48Board
                 board[row][col] = BLANK;
             }
         }
+        score = 0;
+        highTile = -1;
     }
 
     public Twenty48Board(Twenty48Board source)
     {
         board = new int[4][];
         for (int row = 0; row < 4; ++row)
-        {
-             board[row] = new int[4];
-             for (int col = 0; col < 4; ++col)
-             {
-                 board[row][col] = source.board[row][col];
-             }
-        }
+            board[row] = new int[4];
+        this.setBoard(source);
     }
 
     public void newGame()
@@ -40,7 +40,7 @@ public class Twenty48Board
         {
             for (int col = 0; col < 4; ++col)
             {
-                board[row][col] = BLANK;
+                this.board[row][col] = BLANK;
             }
         }
         
@@ -49,12 +49,14 @@ public class Twenty48Board
         {
             int row = (int)(Math.random() * 4);
             int col = (int)(Math.random() * 4);
-            if (board[row][col] == -1)
+            if (this.board[row][col] == -1)
             {
                 placed++;
-                board[row][col] = 0;
+                this.board[row][col] = 0;
             }
         }
+        this.score = 0;
+        this.highTile = 0;
     }
     
     public void setBoard(int[][] board)
@@ -68,9 +70,25 @@ public class Twenty48Board
         }
     }
 
+    public void setBoard(Twenty48Board source)
+    {
+        for (int row = 0; row < 4; ++row)
+        {
+             for (int col = 0; col < 4; ++col)
+             {
+                 this.board[row][col] = source.board[row][col];
+                 if (this.board[row][col] > this.highTile)
+                 {
+                     this.highTile = this.board[row][col];
+                 }
+             }
+        }
+        this.score = source.score;
+    }
+
     public int getTile(int row, int col)
     {
-        return board[row][col];
+        return this.board[row][col];
     }
 
     public boolean isGridLocked()
@@ -90,6 +108,21 @@ public class Twenty48Board
         return true;
     }
 
+    public void setScore(int score)
+    {
+        this.score = score;
+    }
+
+    public int getScore()
+    {
+        return this.score;
+    }
+
+    public int getHighTile()
+    {
+        return this.highTile;
+    }
+
     public LinkedList<TileMove> move(int dir)
     {
         LinkedList<TileMove> moves = new LinkedList<TileMove>();
@@ -106,6 +139,9 @@ public class Twenty48Board
                         {
                             moves.add(new TileMove(row, col, TileMove.LEFT, col-last, board[row][col]));
                             board[row][last] = board[row][col] + 1;
+                            score += SCORE_LUT[board[row][last]];
+                            if (board[row][last] > highTile)
+                                highTile = board[row][last];
                             board[row][col] = -1;
                             ++last;
                         }
@@ -143,6 +179,9 @@ public class Twenty48Board
                         {
                             moves.add(new TileMove(row, col, TileMove.RIGHT, last-col, board[row][col]));
                             board[row][last] = board[row][col] + 1;
+                            score += SCORE_LUT[board[row][last]];
+                            if (board[row][last] > highTile)
+                                highTile = board[row][last];
                             board[row][col] = -1;
                             --last;
                         }
@@ -180,6 +219,9 @@ public class Twenty48Board
                         {
                             moves.add(new TileMove(row, col, TileMove.UP, row-last, board[row][col]));
                             board[last][col] = board[row][col] + 1;
+                            score += SCORE_LUT[board[last][col]];
+                            if (board[last][col] > highTile)
+                                highTile = board[last][col];
                             board[row][col] = -1;
                             ++last;
                         }
@@ -217,6 +259,9 @@ public class Twenty48Board
                         {
                             moves.add(new TileMove(row, col, TileMove.DOWN, last-row, board[row][col]));
                             board[last][col] = board[row][col] + 1;
+                            score += SCORE_LUT[board[last][col]];
+                            if (board[last][col] > highTile)
+                                highTile = board[last][col];
                             board[row][col] = -1;
                             --last;
                         }

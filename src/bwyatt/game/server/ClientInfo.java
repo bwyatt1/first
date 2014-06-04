@@ -39,7 +39,7 @@ public class ClientInfo
         this.gameInstance = instance;
     }
 
-    public GameInstance getInstance(GameInstance instance)
+    public GameInstance getInstance()
     {
         return this.gameInstance;
     }

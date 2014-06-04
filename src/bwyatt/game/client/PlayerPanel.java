@@ -33,15 +33,38 @@ public class PlayerPanel extends JPanel
     public void updateOtherPlayers()
     {
         otherPlayersPanel.removeAll();
-        BoxLayout layout = new BoxLayout(otherPlayersPanel, BoxLayout.Y_AXIS);
+        
+        GridBagLayout layout = new GridBagLayout();
         otherPlayersPanel.setLayout(layout);
-        otherPlayersLabels = new ArrayList<JLabel>();
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         for (PlayerInfo info : otherPlayers)
         {
             JLabel label = new JLabel(ImageCache.getPlayerIcon(info.getIconID()));
-            label.setText(info.getName());
-            otherPlayersPanel.add(label);
-            otherPlayersLabels.add(label);
+            otherPlayersPanel.add(label, gbc);
+
+            if (info.getShowing() != PlayerInfo.GAME_NONE)
+            {
+                label = new JLabel(ImageCache.getStatusIcon(info.getShowing()));
+                gbc.gridx = 1;
+                otherPlayersPanel.add(label, gbc);
+            }
+
+            label = new JLabel(info.getName());
+            gbc.gridx = 2;
+            otherPlayersPanel.add(label, gbc);
+
+            if (info.getStatus() == PlayerInfo.STATUS_ACTIVE)
+            {
+                label = new JLabel("" + info.getScore());
+                gbc.gridx = 3;
+                otherPlayersPanel.add(label, gbc);
+            }
+            gbc.gridy++;
         }
         otherPlayersPanel.revalidate();
         otherPlayersPanel.repaint();
@@ -82,26 +105,9 @@ public class PlayerPanel extends JPanel
             meLabel.setIcon(ImageCache.getPlayerIcon(p.getIconID()));
             return;
         }
-
-        int i = 0;
-        for (PlayerInfo info : otherPlayers)
+        else
         {
-            if (info == p)
-            {
-                String text = info.getName();
-                if (info.getShowing() == PlayerInfo.GAME_BOGGLE)
-                    text = text + " Boggle";
-                else if (info.getShowing() == PlayerInfo.GAME_2048)
-                    text = text + " 2048";
-
-                if (info.getStatus() == PlayerInfo.STATUS_ACTIVE)
-                    text = text + " Active";
-
-                otherPlayersLabels.get(i).setText(text);
-                otherPlayersLabels.get(i).setIcon(ImageCache.getPlayerIcon(p.getIconID()));
-                return;
-            }
-            ++i;
+            updateOtherPlayers();
         }
     }
 

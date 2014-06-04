@@ -14,6 +14,7 @@ public class GameServer extends Thread
     private LinkedList<Twenty48Instance> twenty48Games;
     private LinkedList<BoggleInstance> boggleGames;
     private boolean die;
+    private int nextClientID;
     private int nextInstanceID;
 
     public static final int SERVER_ID = -1;
@@ -25,7 +26,10 @@ public class GameServer extends Thread
         this.connectedClients = new LinkedList<ClientInfo>();
         this.twenty48Games = new LinkedList<Twenty48Instance>();
         this.boggleGames = new LinkedList<BoggleInstance>();
+        this.nextClientID = 1;
         this.nextInstanceID = 1;
+
+        Room.init();
     }
 
     public void die()
@@ -47,7 +51,6 @@ public class GameServer extends Thread
         Set<SelectionKey> selected;
         Iterator<SelectionKey> iter;
         SelectionKey key;
-        int nextClientID = 1;
 
         try
         {
@@ -153,115 +156,204 @@ public class GameServer extends Thread
 
     public void handleMessage(ClientInfo client, Message inMessage)
     {
-        Message outMessage;
         switch (inMessage.getType())
         {
             case Message.MT_JOIN_CHAT:
-                System.out.println("MT_JOIN_CHAT (" + inMessage.getFromID() + "): " + inMessage.getPlayerInfo().getName());
-                client.getPlayer().setName(inMessage.getPlayerInfo().getName());
-                client.getPlayer().setIconID(inMessage.getPlayerInfo().getIconID());
-
-                // announce new player join
-                outMessage = new Message();
-                outMessage.setType(Message.MT_NEW_PLAYER);
-                outMessage.setFromID(client.getPlayer().getID());
-                outMessage.setPlayerInfo(client.getPlayer());
-                broadcast(outMessage);
-
-                // send player list to the new player
-                for (ClientInfo info : connectedClients)
                 {
-                    if (info != client)
+                    System.out.println("MT_JOIN_CHAT (" + inMessage.getFromID() + "): " + inMessage.getPlayerInfo().getName());
+                    client.getPlayer().setName(inMessage.getPlayerInfo().getName());
+                    client.getPlayer().setIconID(inMessage.getPlayerInfo().getIconID());
+
+                    // announce new player join
+                    Message outMessage = new Message();
+                    outMessage.setType(Message.MT_NEW_PLAYER);
+                    outMessage.setFromID(client.getPlayer().getID());
+                    outMessage.setPlayerInfo(client.getPlayer());
+                    broadcast(outMessage);
+
+                    // send player list to the new player
+                    for (ClientInfo info : connectedClients)
                     {
-                        outMessage = new Message();
-                        outMessage.setType(Message.MT_PLAYER_LIST);
-                        outMessage.setFromID(info.getPlayer().getID());
-                        outMessage.setPlayerInfo(info.getPlayer());
-                        sendMessage(client, outMessage);
+                        if (info != client)
+                        {
+                            outMessage = new Message();
+                            outMessage.setType(Message.MT_PLAYER_LIST);
+                            outMessage.setFromID(info.getPlayer().getID());
+                            outMessage.setPlayerInfo(info.getPlayer());
+                            sendMessage(client, outMessage);
+                        }
                     }
                 }
                 break;
             case Message.MT_CHAT:
-                System.out.println("MT_CHAT (" + inMessage.getFromID() + "): " + inMessage.getText());
+                {
+                    System.out.println("MT_CHAT (" + inMessage.getFromID() + "): " + inMessage.getText());
 
-                outMessage = new Message();
-                outMessage.setType(Message.MT_CHAT);
-                outMessage.setFromID(client.getPlayer().getID());
-                outMessage.setText(inMessage.getText());
-                broadcast(outMessage);
+                    Message outMessage = new Message();
+                    outMessage.setType(Message.MT_CHAT);
+                    outMessage.setFromID(client.getPlayer().getID());
+                    outMessage.setText(inMessage.getText());
+                    broadcast(outMessage);
+                }
                 break;
             case Message.MT_PLAYER_INFO_CHANGE:
-                System.out.println("MT_PLAYER_INFO_CHANGE (" + inMessage.getFromID() + ")");
+                {
+                    System.out.println("MT_PLAYER_INFO_CHANGE (" + inMessage.getFromID() + ")");
 
-                client.getPlayer().setName(inMessage.getPlayerInfo().getName());
+                    client.getPlayer().setName(inMessage.getPlayerInfo().getName());
 
-                outMessage = new Message();
-                outMessage.setType(Message.MT_PLAYER_INFO_CHANGE);
-                outMessage.setFromID(client.getPlayer().getID());
-                outMessage.setPlayerInfo(inMessage.getPlayerInfo());
-                broadcast(outMessage);
+                    Message outMessage = new Message();
+                    outMessage.setType(Message.MT_PLAYER_INFO_CHANGE);
+                    outMessage.setFromID(client.getPlayer().getID());
+                    outMessage.setPlayerInfo(inMessage.getPlayerInfo());
+                    broadcast(outMessage);
+                }
                 break;
             case Message.MT_PLAYER_SHOWING_GAME:
-                System.out.println("MT_PLAYER_SHOWING_GAME (" + inMessage.getFromID() + "): " + inMessage.getVal());
-                client.getPlayer().setShowing(inMessage.getVal());
+                {
+                    System.out.println("MT_PLAYER_SHOWING_GAME (" + inMessage.getFromID() + "): " + inMessage.getVal());
+                    client.getPlayer().setShowing(inMessage.getVal());
 
-                outMessage = new Message();
-                outMessage.setType(Message.MT_PLAYER_SHOWING_GAME);
-                outMessage.setFromID(client.getPlayer().getID());
-                outMessage.setVal(inMessage.getVal());
-                broadcast(outMessage);
+                    Message outMessage = new Message();
+                    outMessage.setType(Message.MT_PLAYER_SHOWING_GAME);
+                    outMessage.setFromID(client.getPlayer().getID());
+                    outMessage.setVal(inMessage.getVal());
+                    broadcast(outMessage);
+                }
+                break;
+            case Message.MT_PLAYER_ROOM_CHANGE:
+                {
+                    System.out.println("MT_PLAYER_ROOM_CHANGE (" + inMessage.getFromID() + "): " + inMessage.getPlayerInfo().toString());
+                    client.getPlayer().setRoomID(inMessage.getPlayerInfo().getRoomID());
+                    client.getPlayer().setStatus(inMessage.getPlayerInfo().getStatus());
+
+                    Message outMessage = new Message();
+                    outMessage.setType(Message.MT_PLAYER_ROOM_CHANGE);
+                    outMessage.setFromID(client.getPlayer().getID());
+                    outMessage.setPlayerInfo(client.getPlayer());
+                    broadcast(outMessage);
+                }
                 break;
             case Message.MT_2048_NEW_MULTI:
-                System.out.println("MT_2048_NEW_MULTI (" + inMessage.getFromID() + "): ");
-
-                Twenty48Instance instance = new Twenty48Instance(nextInstanceID);
-                ++nextInstanceID;
-
-                Message newMultiMessage = new Message();
-                newMultiMessage.setType(Message.MT_2048_NEW_MULTI);
-                newMultiMessage.setFromID(client.getPlayer().getID());
-
-                // Find ready 2048 clients and change to active
-                for (ClientInfo info : connectedClients)
                 {
-                    if (info.getPlayer().getShowing() == PlayerInfo.GAME_2048 &&
-                        info.getPlayer().getStatus() == PlayerInfo.STATUS_READY)
-                    {
-                        instance.addClient(info);
-                        sendMessage(info, newMultiMessage);
-                        info.getPlayer().setStatus(PlayerInfo.STATUS_ACTIVE);
+                    System.out.println("MT_2048_NEW_MULTI (" + inMessage.getFromID() + "): ");
 
-                        Message statusMessage = new Message();
-                        statusMessage.setType(Message.MT_PLAYER_STATUS_UPDATE);
-                        statusMessage.setVal(info.getPlayer().getStatus());
-                        statusMessage.setFromID(info.getPlayer().getID());
-                        broadcast(statusMessage);
+                    Twenty48Instance instance = new Twenty48Instance(nextInstanceID);
+                    ++nextInstanceID;
+
+                    Message newMultiMessage = new Message();
+                    newMultiMessage.setType(Message.MT_2048_NEW_MULTI);
+                    newMultiMessage.setFromID(client.getPlayer().getID());
+                    newMultiMessage.setVal(instance.getID());
+
+                    // Find ready 2048 clients and change to active
+                    for (ClientInfo info : connectedClients)
+                    {
+                        if (info.getPlayer().getShowing() == PlayerInfo.GAME_2048 &&
+                            info.getPlayer().getRoomID() == client.getPlayer().getRoomID() &&
+                            info.getPlayer().getStatus() == PlayerInfo.STATUS_READY)
+                        {
+                            instance.addClient(info);
+                            info.setInstance(instance);
+                            sendMessage(info, newMultiMessage);
+                            info.getPlayer().setStatus(PlayerInfo.STATUS_ACTIVE);
+
+                            Message statusMessage = new Message();
+                            statusMessage.setType(Message.MT_PLAYER_ROOM_CHANGE);
+                            statusMessage.setFromID(info.getPlayer().getID());
+                            statusMessage.setPlayerInfo(info.getPlayer());
+                            broadcast(statusMessage);
+                        }
+                    }
+
+                    // Tell each player who else is in this instance
+                    for (ClientInfo info : instance.getClients())
+                    {
+                        Message joinMessage = new Message();
+                        joinMessage.setType(Message.MT_GAME_INSTANCE_JOIN);
+                        joinMessage.setFromID(info.getPlayer().getID());
+                        joinMessage.setVal(instance.getID());
+                        instanceBroadcast(instance, joinMessage);
+                    }
+
+                    instance.newGame();
+
+                    Message boardMessage = new Message();
+                    boardMessage.setType(Message.MT_2048_BOARD_UPDATE);
+                    for (ClientInfo info : instance.getClients())
+                    {
+                        boardMessage.setFromID(info.getPlayer().getID());
+                        boardMessage.setTwenty48Board(instance.getBoard(info));
+                        instanceBroadcast(instance, boardMessage);
+                    }
+
+                    Room room = Room.getRoomFromID(client.getPlayer().getRoomID());
+                    instance.startTimer(room.getDuration());
+
+                    Message timerMessage = new Message();
+                    timerMessage.setType(Message.MT_GAME_INSTANCE_START_TIMER);
+                    timerMessage.setFromID(SERVER_ID);
+                    timerMessage.setVal(room.getDuration());
+                    instanceBroadcast(instance, timerMessage);
+
+                }
+                break;
+            case Message.MT_2048_MOVE:
+                {
+                    System.out.println("MT_2048_MOVE (" + inMessage.getFromID() + ")");
+                    Twenty48Instance instance = (Twenty48Instance)client.getInstance();
+                    if (instance != null)
+                    {
+                        LinkedList<TileMove> moves = instance.getBoard(client).move(inMessage.getVal());
+                        if (moves != null)
+                        {
+                            Message outMessage = new Message();
+                            outMessage.setType(Message.MT_2048_BOARD_UPDATE);
+                            outMessage.setFromID(client.getPlayer().getID());
+                            outMessage.setTwenty48Board(instance.getBoard(client));
+                            outMessage.setTwenty48Moves(moves);
+                            instanceBroadcast(instance, outMessage);
+                        }
+                    }
+                    else
+                    {
+                        System.out.println("No instance found");
                     }
                 }
-
-                // Tell each player who else is in this instance
-                for (ClientInfo info : instance.getClients())
+                break;
+            case Message.MT_GAME_INSTANCE_LEAVE:
                 {
-                    Message joinMessage = new Message();
-                    joinMessage.setType(Message.MT_GAME_INSTANCE_JOIN);
-                    joinMessage.setFromID(info.getPlayer().getID());
-                    instanceBroadcast(instance, joinMessage);
+                    System.out.println("MT_GAME_INSTANCE_LEAVE (" + inMessage.getFromID() + ")");
+                    GameInstance instance = client.getInstance();
+                    if (instance != null)
+                    {
+                        client.setInstance(null);
+                        instance.removeClient(client);
+                        Message outMessage = new Message();
+                        outMessage.setType(Message.MT_GAME_INSTANCE_LEAVE);
+                        outMessage.setFromID(client.getPlayer().getID());
+                        outMessage.setVal(client.getInstance().getID());
+                        instanceBroadcast(instance, outMessage);
+                    }
                 }
-
-                instance.newGame();
-
-                Message boardMessage = new Message();
-                boardMessage.setType(Message.MT_2048_BOARD_UPDATE);
-                for (ClientInfo info : instance.getClients())
+                break;
+            case Message.MT_GAME_INSTANCE_OVER:
                 {
-                    boardMessage.setFromID(info.getPlayer().getID());
-                    boardMessage.setTwenty48Board(instance.getBoard(info));
-                    instanceBroadcast(instance, boardMessage);
+                    System.out.println("MT_GAME_INSTANCE_OVER (" + inMessage.getFromID() + ")");
+                    GameInstance instance = client.getInstance();
+                    if (instance != null)
+                    {
+                        Message outMessage = new Message();
+                        outMessage.setType(Message.MT_GAME_INSTANCE_OVER);
+                        outMessage.setFromID(client.getPlayer().getID());
+                        instanceBroadcast(instance, outMessage);
+                    }
                 }
-
                 break;
             case Message.MT_BOGGLE_SUBMIT_WORD:
-                System.out.println("MT_BOGGLE_SUBMIT_WORD (" + inMessage.getFromID() + "): " + inMessage.getText());
+                {
+                    System.out.println("MT_BOGGLE_SUBMIT_WORD (" + inMessage.getFromID() + "): " + inMessage.getText());
+                }
                 break;
             default:
                 System.out.println("handleMessage: Unrecognized type: " + inMessage.getType());
@@ -272,7 +364,7 @@ public class GameServer extends Thread
     {
         try
         {
-            ByteBuffer buf = message.create();
+            ByteBuffer buf = message.assemble();
             System.out.print("WRITE " + client.getPlayer().getName() + " (" + buf.limit() + "):");
             Message.printBytes(buf.array(), buf.position(), buf.limit());
             client.getChannel().write(buf);
@@ -285,12 +377,12 @@ public class GameServer extends Thread
 
     public void broadcast(Message message)
     {
-        ByteBuffer buf = message.create();
+        ByteBuffer buf = message.assemble();
         for (ClientInfo info : this.connectedClients)
         {
             try
             {
-                System.out.println("WRITE " + info.getPlayer().getName() + " (" + buf.limit() + "):");
+                System.out.print("WRITE " + info.getPlayer().getName() + " (" + buf.limit() + "):");
                 Message.printBytes(buf.array(), buf.position(), buf.limit());
                 info.getChannel().write(buf);
                 buf.rewind();
@@ -309,7 +401,6 @@ public class GameServer extends Thread
             sendMessage(client, message);
         }
     }
-
 
     public ClientInfo getClient(SocketChannel channel)
     {

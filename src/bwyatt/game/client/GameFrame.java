@@ -9,6 +9,9 @@ import bwyatt.game.client.boggle.*;
 import bwyatt.game.client.twenty48.*;
 import bwyatt.game.common.*;
 
+/*
+ * Primary GUI class for the client
+ */
 public class GameFrame extends JFrame
 {
     private BogglePanel bogglePanel;
@@ -279,6 +282,9 @@ public class GameFrame extends JFrame
         activePanel.requestFocusInWindow();
     }
 
+    /*
+     * Application close - write config file and exit
+     */
     public void close()
     {
         saveConfig();
@@ -302,6 +308,9 @@ public class GameFrame extends JFrame
         config.writeFile(CONFIG_FILENAME);
     }
 
+    /*
+     * Called from the Preferences Pane if a GUI setting was changed
+     */
     public void preferencesChanged()
     {
         if (preferencesPane.getMusicMuted())
@@ -333,6 +342,8 @@ public class GameFrame extends JFrame
             myInfo.setIconID(preferencesPane.getPlayerIconID());
             playerPanel.updatePlayer(myInfo);
             chatBoxPanel.updatePlayerStyle(myInfo);
+            if (twenty48Panel != null)
+                twenty48Panel.updatePlayerStyle(myInfo);
 
             Message message = new Message();
             message.setType(Message.MT_PLAYER_INFO_CHANGE);
@@ -341,6 +352,9 @@ public class GameFrame extends JFrame
         }
     }
 
+    /*
+     * Called from the Preferences Pane when it is closed
+     */
     public void preferencesHidden()
     {
         saveConfig();
@@ -351,6 +365,9 @@ public class GameFrame extends JFrame
         preferencesPane.setVisible(true);
     }
 
+    /*
+     * load the boggle panel and inform the server
+     */
     public void startBoggle()
     {
         this.bogglePanel = new BogglePanel();
@@ -386,11 +403,14 @@ public class GameFrame extends JFrame
         socketThread.sendMessage(message);
     }
 
+    /*
+     * load the 2048 panel and inform the server
+     */
     public void start2048()
     {
-        twenty48Panel = new Twenty48Panel();
+        twenty48Panel = new Twenty48Panel(myInfo, players, this);
         JMenuBar jmenubar = new JMenuBar();
-        jmenubar.add(twenty48Panel.createMenu(this));
+        jmenubar.add(twenty48Panel.createMenu());
         jmenubar.add(editMenu);
         this.setJMenuBar(jmenubar);
         activePanel.removeAll();
@@ -407,19 +427,33 @@ public class GameFrame extends JFrame
         socketThread.sendMessage(message);
     }
 
+    /*
+     * Reset player game status and gui
+     */
     public void close2048()
     {
         this.activePanel.removeAll();
         this.twenty48Panel = null;
         this.showGames();
 
+        myInfo.setRoomID(0);
+        myInfo.setStatus(PlayerInfo.STATUS_NONE);
         Message message = new Message();
+        message.setType(Message.MT_PLAYER_ROOM_CHANGE);
+        message.setFromID(myInfo.getID());
+        message.setPlayerInfo(myInfo);
+        socketThread.sendMessage(message);
+
+        message = new Message();
         message.setType(Message.MT_PLAYER_SHOWING_GAME);
         message.setFromID(myInfo.getID());
         message.setVal(PlayerInfo.GAME_NONE);
         socketThread.sendMessage(message);
     }
 
+    /*
+     * called from the socket thread if connect/disconnect
+     */
     public void setServerStatus(boolean status)
     {
         playerPanel.setServerStatus(status);
@@ -427,9 +461,55 @@ public class GameFrame extends JFrame
         {
             Message message = new Message();
             message.setType(Message.MT_JOIN_CHAT);
+            message.setFromID(myInfo.getID());
             message.setPlayerInfo(myInfo);
             socketThread.sendMessage(message);
         }
+    }
+
+    /*
+     * called from a game multiplayer panel
+     */
+    public void myRoomUpdate(int roomID, boolean readyStatus)
+    {
+        // TODO: wait for server response before updating info and GUI
+        myInfo.setRoomID(roomID);
+        if (readyStatus)
+            myInfo.setStatus(PlayerInfo.STATUS_READY);
+        else
+            myInfo.setStatus(PlayerInfo.STATUS_NONE);
+
+        Message message = new Message();
+        message.setType(Message.MT_PLAYER_ROOM_CHANGE);
+        message.setFromID(myInfo.getID());
+        message.setPlayerInfo(myInfo);
+        socketThread.sendMessage(message);
+    }
+
+    public void newMultiRequest()
+    {
+        Message message = new Message();
+        message.setType(Message.MT_2048_NEW_MULTI);
+        message.setFromID(myInfo.getID());
+        message.setVal(-1);
+        socketThread.sendMessage(message);
+    }
+
+    public void twenty48MoveRequest(int dir)
+    {
+        Message message = new Message();
+        message.setType(Message.MT_2048_MOVE);
+        message.setFromID(myInfo.getID());
+        message.setVal(dir);
+        socketThread.sendMessage(message);
+    }
+
+    public void gameOverRequest()
+    {
+        Message message = new Message();
+        message.setType(Message.MT_GAME_INSTANCE_OVER);
+        message.setFromID(myInfo.getID());
+        socketThread.sendMessage(message);
     }
 
     public void sendChat()
@@ -449,6 +529,9 @@ public class GameFrame extends JFrame
             activePanel.requestFocusInWindow();
     }
 
+    /*
+     * Primary event handling for messages from the server
+     */
     public void handleMessage(Message message)
     {
         PlayerInfo fromPlayer = getPlayerInfo(message.getFromID());
@@ -469,12 +552,16 @@ public class GameFrame extends JFrame
                     players.add(info);
                     playerPanel.addPlayer(info);
                     chatBoxPanel.updatePlayerStyle(info);
+                    if (twenty48Panel != null)
+                        twenty48Panel.updatePlayerRoom(info);
                 }
                 break;
             case Message.MT_PLAYER_CLOSED:
                 System.out.println("MT_PLAYER_CLOSED: " + fromPlayer.toString());
                 players.remove(fromPlayer);
                 playerPanel.removePlayer(fromPlayer);
+                if (twenty48Panel != null)
+                    twenty48Panel.updatePlayerRoom(null);
                 break;
             case Message.MT_PLAYER_INFO_CHANGE:
                 System.out.println("MT_PLAYER_INFO_CHANGE: " + message.getPlayerInfo().toString());
@@ -482,6 +569,59 @@ public class GameFrame extends JFrame
                 fromPlayer.setIconID(message.getPlayerInfo().getIconID());
                 playerPanel.updatePlayer(fromPlayer);
                 chatBoxPanel.updatePlayerStyle(fromPlayer);
+                if (twenty48Panel != null)
+                {
+                    twenty48Panel.updatePlayerStyle(fromPlayer);
+                }
+                break;
+            case Message.MT_PLAYER_ROOM_CHANGE:
+                System.out.println("MT_PLAYER_ROOM_CHANGE: " + fromPlayer.toString());
+                fromPlayer.setRoomID(message.getPlayerInfo().getRoomID());
+                fromPlayer.setStatus(message.getPlayerInfo().getStatus());
+                if (twenty48Panel != null)
+                    twenty48Panel.updatePlayerRoom(null);
+                break;
+            case Message.MT_GAME_INSTANCE_JOIN:
+                System.out.println("MT_GAME_INSTANCE_JOIN: " + fromPlayer.toString());
+                if (twenty48Panel != null)
+                {
+                    twenty48Panel.addInstancePlayer(fromPlayer);
+                }
+                break;
+            case Message.MT_GAME_INSTANCE_LEAVE:
+                System.out.println("MT_GAME_INSTANCE_LEAVE: " + fromPlayer.toString());
+                if (twenty48Panel != null)
+                {
+                    twenty48Panel.removeInstancePlayer(fromPlayer);
+                }
+                break;
+            case Message.MT_GAME_INSTANCE_OVER:
+                System.out.println("MT_GAME_INSTANCE_OVER: " + fromPlayer.toString());
+                if (twenty48Panel != null)
+                {
+                    twenty48Panel.gameOver(fromPlayer);
+                }
+                break;
+            case Message.MT_GAME_INSTANCE_START_TIMER:
+                System.out.println("MT_GAME_INSTANCE_START_TIMER: " + message.getVal());
+                if (twenty48Panel != null)
+                {
+                    twenty48Panel.startTimer(message.getVal());
+                }
+                break;
+            case Message.MT_2048_NEW_MULTI:
+                System.out.println("MT_2048_NEW_MULTI: " + message.getVal());
+                if (twenty48Panel != null)
+                {
+                    twenty48Panel.startMultiGame();
+                }
+                break;
+            case Message.MT_2048_BOARD_UPDATE:
+                System.out.println("MT_2048_BOARD_UPDATE");
+                if (twenty48Panel != null)
+                {
+                    twenty48Panel.updateBoard(fromPlayer, message.getTwenty48Board(), message.getTwenty48Moves());
+                }
                 break;
             case Message.MT_CHAT:
                 System.out.println("MT_CHAT (" + fromPlayer.toString() + "): " + message.getText());
@@ -491,6 +631,10 @@ public class GameFrame extends JFrame
                 System.out.println("MT_PLAYER_SHOWING_GAME (" + fromPlayer.toString() + "): " + message.getVal());
                 fromPlayer.setShowing(message.getVal());
                 playerPanel.updatePlayer(fromPlayer);
+                if (twenty48Panel != null)
+                {
+                    twenty48Panel.updatePlayerStyle(fromPlayer);
+                }
                 break;
             default:
                 System.out.println("handleMessage: Unknown type: " + message.getType());

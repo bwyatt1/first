@@ -7,11 +7,14 @@ public class PlayerInfo
     private int showingGame;
     private int status;
     private int iconID;
+    private int roomID;
+    private int score;
 
-    public static final int GAME_NONE = 0;
-    public static final int GAME_BOGGLE = 1;
-    public static final int GAME_2048 = 2;
+    public static final int GAME_NONE = -1;
+    public static final int GAME_BOGGLE = 0;
+    public static final int GAME_2048 = 1;
 
+    public static final int STATUS_NONE = 0;
     public static final int STATUS_READY = 1;
     public static final int STATUS_ACTIVE = 2;
 
@@ -22,6 +25,8 @@ public class PlayerInfo
         this.showingGame = GAME_NONE;
         this.status = 0;
         this.iconID = 0;
+        this.roomID = 0;
+        this.score = 0;
     }
 
     public PlayerInfo(String name, int id)
@@ -31,6 +36,8 @@ public class PlayerInfo
         this.showingGame = GAME_NONE;
         this.status = 0;
         this.iconID = 0;
+        this.roomID = 0;
+        this.score = 0;
     }
 
     public PlayerInfo(PlayerInfo source)
@@ -40,6 +47,8 @@ public class PlayerInfo
         this.showingGame = source.showingGame;
         this.status = source.status;
         this.iconID = source.iconID;
+        this.roomID = source.roomID;
+        this.score = source.score;
     }
 
     public String toString()
@@ -52,7 +61,7 @@ public class PlayerInfo
         if (status == STATUS_READY)
             ret += ",status=Ready";
         else if (status == STATUS_ACTIVE)
-            ret += ",status=Active";
+            ret += ",status=Active,score=" + score;
         return ret;
     }
 
@@ -104,5 +113,25 @@ public class PlayerInfo
     public void setIconID(int iconID)
     {
         this.iconID = iconID;
+    }
+
+    public int getRoomID()
+    {
+        return this.roomID;
+    }
+
+    public void setRoomID(int roomID)
+    {
+        this.roomID = roomID;
+    }
+
+    public int getScore()
+    {
+        return this.score;
+    }
+
+    public void setScore(int score)
+    {
+        this.score = score;
     }
 }
