@@ -51,12 +51,12 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
         chatInput = new JTextField();
         chatInput.addActionListener(this);
 
-        backLabel = new JLabel(ImageCache.getSmallLetter('B'));
+        backLabel = new JLabel(ImageCache.getBackIcon());
         backLabel.addMouseListener(this);
-        homeLabel = new JLabel(ImageCache.getSmallLetter('H'));
+        homeLabel = new JLabel(ImageCache.getHomeIcon());
         homeLabel.setHorizontalAlignment(SwingConstants.LEFT);
         homeLabel.addMouseListener(this);
-        settingsLabel = new JLabel(ImageCache.getSmallLetter('S'));
+        settingsLabel = new JLabel(ImageCache.getSettingsIcon());
         settingsLabel.addMouseListener(this);
 
         JPanel navPanel = new JPanel();
@@ -217,8 +217,11 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
         activePanel.setFocusable(true);
         InputMap inputMap = activePanel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         ActionMap actionMap = activePanel.getActionMap();
+
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, 0), "slash");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_DOWN_MASK), "ctrl-b");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "ctrl-q");
+
         actionMap.put("slash", new AbstractAction()
             {
                 public void actionPerformed(ActionEvent e)
@@ -232,6 +235,14 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
                 public void actionPerformed(ActionEvent e)
                 {
                     close();
+                }
+            }
+        );
+        actionMap.put("ctrl-b", new AbstractAction()
+            {
+                public void actionPerformed(ActionEvent e)
+                {
+                    startBoggle();
                 }
             }
         );
@@ -367,7 +378,7 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
         activePanel.removeAll();
         gamesPanel = null;
 
-        this.bogglePanel = new BogglePanel();
+        this.bogglePanel = new BogglePanel(this);
         bogglePanel.newGame();
         activePanel.setLayout(new GridLayout(1, 1));
         activePanel.add(bogglePanel); 

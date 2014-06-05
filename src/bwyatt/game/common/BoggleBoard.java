@@ -1,5 +1,6 @@
 package bwyatt.game.common;
 
+import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -256,6 +257,151 @@ public class BoggleBoard
                 unused.remove(unusedIndex);
             }
         }
+    }
+
+    public LinkedList<Point> findPath(String word, LinkedList<Point> path)
+    {
+        if (word == null || word.length() == 0)
+            return null;
+
+        LinkedList<Point> solution;
+        boolean[][] marked;
+
+        marked = new boolean[4][];
+        for (int row = 0; row < 4; ++row)
+        {
+            marked[row] = new boolean[4];
+            for (int col = 0; col < 4; ++col)
+            {
+                marked[row][col] = false;
+            }
+        }
+
+        if (path == null)
+        {
+            path = new LinkedList<Point>();
+            for (int row = 0; row < 4; ++row)
+            {
+                for (int col = 0; col < 4; ++col)
+                {
+                    if (board[row][col] == word.charAt(0))
+                    {
+                        path.addLast(new Point(col, row));
+                        marked[row][col] = true;
+                        solution = findPath(word, path, marked);
+                        if (solution != null)
+                            return solution;
+                        marked[row][col] = false;
+                        path.removeLast();
+                    }
+                }
+            }
+        }
+        else
+        {
+            solution = findPath(word, path, marked);
+            if (solution != null)
+                return solution;
+        }
+        return null;
+    }
+
+    protected LinkedList<Point> findPath(String word, LinkedList<Point> path, boolean[][] marked)
+    {
+        LinkedList<Point> solution;
+
+        if (word.length() == path.size())
+            return path;
+        int row = path.getLast().y;
+        int col = path.getLast().x;
+        char next = word.charAt(path.size());
+        if (row > 0)
+        {
+            if (!marked[row-1][col] && board[row-1][col] == next)
+            {
+                path.addLast(new Point(col, row-1));
+                marked[row-1][col] = true;
+                solution = findPath(word, path, marked);
+                if (solution != null)
+                    return solution;
+                marked[row-1][col] = false;
+                path.removeLast();
+            }
+            if (col > 0 && !marked[row-1][col-1] && board[row-1][col-1] == next)
+            {
+                path.addLast(new Point(col-1, row-1));
+                marked[row-1][col-1] = true;
+                solution = findPath(word, path, marked);
+                if (solution != null)
+                    return solution;
+                marked[row-1][col-1] = false;
+                path.removeLast();
+            }
+            if (col < 3 && !marked[row-1][col+1] && board[row-1][col+1] == next)
+            {
+                path.addLast(new Point(col+1, row-1));
+                marked[row-1][col+1] = true;
+                solution = findPath(word, path, marked);
+                if (solution != null)
+                    return solution;
+                marked[row-1][col+1] = false;
+                path.removeLast();
+            }
+        }
+        if (row < 3)
+        {
+            if (!marked[row+1][col] && board[row+1][col] == next)
+            {
+                path.addLast(new Point(col, row+1));
+                marked[row+1][col] = true;
+                solution = findPath(word, path, marked);
+                if (solution != null)
+                    return solution;
+                marked[row+1][col] = false;
+                path.removeLast();
+            }
+            if (col > 0 && !marked[row+1][col-1] && board[row+1][col-1] == next)
+            {
+                path.addLast(new Point(col-1, row+1));
+                marked[row+1][col-1] = true;
+                solution = findPath(word, path, marked);
+                if (solution != null)
+                    return solution;
+                marked[row+1][col-1] = false;
+                path.removeLast();
+            }
+            if (col < 3 && !marked[row+1][col+1] && board[row+1][col+1] == next)
+            {
+                path.addLast(new Point(col+1, row+1));
+                marked[row+1][col+1] = true;
+                solution = findPath(word, path, marked);
+                if (solution != null)
+                    return solution;
+                marked[row+1][col+1] = false;
+                path.removeLast();
+            }
+        }
+        if (col > 0 && !marked[row][col-1] && board[row][col-1] == next)
+        {
+            path.addLast(new Point(col-1, row));
+            marked[row][col-1] = true;
+            solution = findPath(word, path, marked);
+            if (solution != null)
+                return solution;
+            marked[row][col-1] = false;
+            path.removeLast();
+        }
+        if (col < 3 && !marked[row][col+1] && board[row][col+1] == next)
+        {
+            path.addLast(new Point(col+1, row));
+            marked[row][col+1] = true;
+            solution = findPath(word, path, marked);
+            if (solution != null)
+                return solution;
+            marked[row][col+1] = false;
+            path.removeLast();
+        }
+        return null;
     }
 
     public char get(int row, int col)
