@@ -2,8 +2,10 @@ package bwyatt.game.client;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 import java.util.*;
 import javax.swing.*;
+import org.apache.log4j.*;
 
 import bwyatt.game.client.boggle.*;
 import bwyatt.game.client.twenty48.*;
@@ -32,6 +34,8 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
     private Config config;
     private PreferencesPane preferencesPane;
     private JSplitPane splitPane;
+
+    private static Logger logger = Logger.getLogger(GameFrame.class.getName());
 
     private final static String CONFIG_FILENAME = "boggle.ini";
 
@@ -535,13 +539,13 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
         switch (message.getType())
         {
             case Message.MT_ID_UPDATE:
-                System.out.println("MT_ID_UPDATE: " + message.getVal());
+                logger.debug("MT_ID_UPDATE: " + message.getVal());
                 myInfo.setID(message.getVal());
                 chatBoxPanel.updatePlayerStyle(myInfo);
                 break;
             case Message.MT_NEW_PLAYER:
             case Message.MT_PLAYER_LIST:
-                System.out.println("MT_PLAYER: " + message.getPlayerInfo().toString());
+                logger.debug("MT_PLAYER: " + message.getPlayerInfo().toString());
                 if (message.getFromID() != myInfo.getID())
                 {
                     PlayerInfo info = new PlayerInfo(message.getPlayerInfo());
@@ -554,14 +558,14 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
                 }
                 break;
             case Message.MT_PLAYER_CLOSED:
-                System.out.println("MT_PLAYER_CLOSED: " + fromPlayer.toString());
+                logger.debug("MT_PLAYER_CLOSED: " + fromPlayer.toString());
                 players.remove(fromPlayer);
                 playerPanel.removePlayer(fromPlayer);
                 if (twenty48Panel != null)
                     twenty48Panel.updatePlayerRoom(null);
                 break;
             case Message.MT_PLAYER_INFO_CHANGE:
-                System.out.println("MT_PLAYER_INFO_CHANGE: " + message.getPlayerInfo().toString());
+                logger.debug("MT_PLAYER_INFO_CHANGE: " + message.getPlayerInfo().toString());
                 fromPlayer.setName(message.getPlayerInfo().getName());
                 fromPlayer.setIconID(message.getPlayerInfo().getIconID());
                 playerPanel.updatePlayer(fromPlayer);
@@ -572,60 +576,60 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
                 }
                 break;
             case Message.MT_PLAYER_ROOM_CHANGE:
-                System.out.println("MT_PLAYER_ROOM_CHANGE: " + fromPlayer.toString());
+                logger.debug("MT_PLAYER_ROOM_CHANGE: " + fromPlayer.toString());
                 fromPlayer.setRoomID(message.getPlayerInfo().getRoomID());
                 fromPlayer.setStatus(message.getPlayerInfo().getStatus());
                 if (twenty48Panel != null)
                     twenty48Panel.updatePlayerRoom(null);
                 break;
             case Message.MT_GAME_INSTANCE_JOIN:
-                System.out.println("MT_GAME_INSTANCE_JOIN: " + fromPlayer.toString());
+                logger.debug("MT_GAME_INSTANCE_JOIN: " + fromPlayer.toString());
                 if (twenty48Panel != null)
                 {
                     twenty48Panel.addInstancePlayer(fromPlayer);
                 }
                 break;
             case Message.MT_GAME_INSTANCE_LEAVE:
-                System.out.println("MT_GAME_INSTANCE_LEAVE: " + fromPlayer.toString());
+                logger.debug("MT_GAME_INSTANCE_LEAVE: " + fromPlayer.toString());
                 if (twenty48Panel != null)
                 {
                     twenty48Panel.removeInstancePlayer(fromPlayer);
                 }
                 break;
             case Message.MT_GAME_INSTANCE_OVER:
-                System.out.println("MT_GAME_INSTANCE_OVER: " + fromPlayer.toString());
+                logger.debug("MT_GAME_INSTANCE_OVER: " + fromPlayer.toString());
                 if (twenty48Panel != null)
                 {
                     twenty48Panel.gameOver(fromPlayer);
                 }
                 break;
             case Message.MT_GAME_INSTANCE_START_TIMER:
-                System.out.println("MT_GAME_INSTANCE_START_TIMER: " + message.getVal());
+                logger.debug("MT_GAME_INSTANCE_START_TIMER: " + message.getVal());
                 if (twenty48Panel != null)
                 {
                     twenty48Panel.startTimer(message.getVal());
                 }
                 break;
             case Message.MT_2048_NEW_MULTI:
-                System.out.println("MT_2048_NEW_MULTI: " + message.getVal());
+                logger.debug("MT_2048_NEW_MULTI: " + message.getVal());
                 if (twenty48Panel != null)
                 {
                     twenty48Panel.startMultiGame();
                 }
                 break;
             case Message.MT_2048_BOARD_UPDATE:
-                System.out.println("MT_2048_BOARD_UPDATE");
+                logger.debug("MT_2048_BOARD_UPDATE");
                 if (twenty48Panel != null)
                 {
                     twenty48Panel.updateBoard(fromPlayer, message.getTwenty48Board(), message.getTwenty48Moves());
                 }
                 break;
             case Message.MT_CHAT:
-                System.out.println("MT_CHAT (" + fromPlayer.toString() + "): " + message.getText());
+                logger.debug("MT_CHAT (" + fromPlayer.toString() + "): " + message.getText());
                 chatBoxPanel.addChat(fromPlayer, message.getText());
                 break;
             case Message.MT_PLAYER_SHOWING_GAME:
-                System.out.println("MT_PLAYER_SHOWING_GAME (" + fromPlayer.toString() + "): " + message.getVal());
+                logger.debug("MT_PLAYER_SHOWING_GAME (" + fromPlayer.toString() + "): " + message.getVal());
                 fromPlayer.setShowing(message.getVal());
                 playerPanel.updatePlayer(fromPlayer);
                 if (twenty48Panel != null)
@@ -634,7 +638,7 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
                 }
                 break;
             default:
-                System.out.println("handleMessage: Unknown type: " + message.getType());
+                logger.error("handleMessage: Unknown type: " + message.getType());
         }
     }
 
@@ -650,8 +654,27 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
         return null;
     }
 
+    /*
+     * -d output debug to console as well as logfile
+     */
     public static void main(String[] args)
     {
+        logger.getRootLogger().setLevel(Level.TRACE);
+        try
+        {
+            logger.getRootLogger().addAppender(new FileAppender(new PatternLayout("%r %m%n"), "boggle.log"));
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        if (args.length > 0 && args[0].equals("-d"))
+        {
+            logger.getRootLogger().addAppender(new ConsoleAppender(new PatternLayout("%r %C{1} %m%n")));
+        }
+
+        logger.info("Application Launched");
+
         try
         {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

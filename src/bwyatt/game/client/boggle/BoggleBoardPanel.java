@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import javax.swing.*;
+import org.apache.log4j.Logger;
 
 import bwyatt.game.client.*;
 import bwyatt.game.common.*;
@@ -23,6 +24,7 @@ public class BoggleBoardPanel extends JLayeredPane implements MouseMotionListene
     private LinkedList<Point> hiPath;
     private boolean[][] hiMark;
 
+    private static Logger logger = Logger.getLogger(BoggleBoardPanel.class.getName());
     public BoggleBoardPanel()
     {
         super();
@@ -249,7 +251,7 @@ public class BoggleBoardPanel extends JLayeredPane implements MouseMotionListene
 
     public void mouseClicked(MouseEvent e)
     {
-        System.out.println("Mouse clicked: " + e.toString());
+        logger.debug("Mouse clicked: " + e.toString());
     }
 
     public void mouseMoved(MouseEvent e)

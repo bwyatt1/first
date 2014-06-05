@@ -2,6 +2,7 @@
 
     <path id="project.classpath">
         <pathelement path="/home/bill/opt/jdk1.7.0_60/jre/lib/jfxrt.jar" />
+        <pathelement path="/usr/share/java/log4j-1.2.jar" />
     </path>
 
     <target name="compile">
@@ -20,12 +21,13 @@
             </manifest>
             <fileset dir="src" includes="bwyatt/game/client/resource/*"/>
             <zipgroupfileset dir="/home/bill/opt/jdk1.7.0_60/" includes="jre/lib/jfxrt.jar" />
+            <zipgroupfileset dir="/usr/share/java/" includes="log4j-1.2.jar" />
         </jar>
     </target>
 
     <target name="client" depends="jar">
         <java jar="build/jar/Boggle.jar" fork="true">
-            <classpath refid="project.classpath"/>
+            <arg value="-d" />
         </java>
     </target>
 
@@ -34,8 +36,11 @@
             <manifest>
                 <attribute name="Main-Class" value="bwyatt.game.server.GameServer" />
             </manifest>
+            <zipgroupfileset dir="/usr/share/java/" includes="log4j-1.2.jar" />
         </jar>
-        <java jar="build/jar/BoggleServer.jar" fork="true" />
+        <java jar="build/jar/BoggleServer.jar" fork="true" >
+            <arg value="-d" />
+        </java>
     </target>
 
     <target name="clean">

@@ -1,9 +1,11 @@
 package bwyatt.game.server;
 
+import java.io.*;
 import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
+import org.apache.log4j.*;
 
 import bwyatt.game.common.*;
 
@@ -16,6 +18,8 @@ public class GameServer extends Thread
     private boolean die;
     private int nextClientID;
     private int nextInstanceID;
+
+    private static Logger logger = Logger.getLogger(GameServer.class.getName());
 
     public static final int SERVER_ID = -1;
 
@@ -59,7 +63,7 @@ public class GameServer extends Thread
             serverSocket.bind(new InetSocketAddress(5000));
             serverSocket.configureBlocking(false);
             serverSocket.register(this.selector, SelectionKey.OP_ACCEPT);
-            System.out.println("Listening on port 5000");
+            logger.info("Listening on port 5000");
             this.selector.select();
             while (!this.die)
             {
@@ -78,7 +82,7 @@ public class GameServer extends Thread
                             ClientInfo newClient = new ClientInfo();
                             newClient.setChannel(channel);
                             connectedClients.add(newClient);
-                            System.out.println("New connection from: " + channel.getRemoteAddress().toString());
+                            logger.info("New connection from: " + channel.getRemoteAddress().toString());
 
                             PlayerInfo playerInfo = new PlayerInfo();
                             playerInfo.setID(nextClientID);
@@ -94,7 +98,8 @@ public class GameServer extends Thread
                         }
                         else
                         {
-                            System.out.println("Accepted null channel");
+                            // this happens all the time, not sure what the problem is
+                            logger.debug("Accepted null channel");
                         }
                     }
                     else if (key.isReadable())
@@ -113,8 +118,8 @@ public class GameServer extends Thread
                         }
                         if (bytesRead == -1)
                         {
-                            System.out.println("READ -1 bytes, removing client " + fromInfo.getPlayer().getName() +
-                                    "(" + channel.getRemoteAddress().toString() + ")");
+                            logger.info("Client " + fromInfo.getPlayer().getName() +
+                                    "disconnected (" + channel.getRemoteAddress().toString() + ")");
                             key.cancel();
                             connectedClients.remove(fromInfo);
                             Message message = new Message();
@@ -126,8 +131,8 @@ public class GameServer extends Thread
                         {
                             buf.limit(buf.position());
                             buf.rewind();
-                            System.out.print("READ " + fromInfo.getPlayer().getName() + " (" + bytesRead + "):");
-                            Message.printBytes(buf.array(), 0, buf.limit());
+                            logger.trace("READ " + fromInfo.getPlayer().getName() + " (" + bytesRead + "):" +
+                                         Message.getBytesAsString(buf.array(), 0, buf.limit()));
 
                             Message inMessage = new Message();
                             int bytesParsed = inMessage.parse(buf);
@@ -160,7 +165,7 @@ public class GameServer extends Thread
         {
             case Message.MT_JOIN_CHAT:
                 {
-                    System.out.println("MT_JOIN_CHAT (" + inMessage.getFromID() + "): " + inMessage.getPlayerInfo().getName());
+                    logger.debug("MT_JOIN_CHAT (" + inMessage.getFromID() + "): " + inMessage.getPlayerInfo().getName());
                     client.getPlayer().setName(inMessage.getPlayerInfo().getName());
                     client.getPlayer().setIconID(inMessage.getPlayerInfo().getIconID());
 
@@ -187,7 +192,7 @@ public class GameServer extends Thread
                 break;
             case Message.MT_CHAT:
                 {
-                    System.out.println("MT_CHAT (" + inMessage.getFromID() + "): " + inMessage.getText());
+                    logger.debug("MT_CHAT (" + inMessage.getFromID() + "): " + inMessage.getText());
 
                     Message outMessage = new Message();
                     outMessage.setType(Message.MT_CHAT);
@@ -198,7 +203,7 @@ public class GameServer extends Thread
                 break;
             case Message.MT_PLAYER_INFO_CHANGE:
                 {
-                    System.out.println("MT_PLAYER_INFO_CHANGE (" + inMessage.getFromID() + ")");
+                    logger.debug("MT_PLAYER_INFO_CHANGE (" + inMessage.getFromID() + ")");
 
                     client.getPlayer().setName(inMessage.getPlayerInfo().getName());
 
@@ -211,7 +216,7 @@ public class GameServer extends Thread
                 break;
             case Message.MT_PLAYER_SHOWING_GAME:
                 {
-                    System.out.println("MT_PLAYER_SHOWING_GAME (" + inMessage.getFromID() + "): " + inMessage.getVal());
+                    logger.debug("MT_PLAYER_SHOWING_GAME (" + inMessage.getFromID() + "): " + inMessage.getVal());
                     client.getPlayer().setShowing(inMessage.getVal());
 
                     Message outMessage = new Message();
@@ -223,7 +228,7 @@ public class GameServer extends Thread
                 break;
             case Message.MT_PLAYER_ROOM_CHANGE:
                 {
-                    System.out.println("MT_PLAYER_ROOM_CHANGE (" + inMessage.getFromID() + "): " + inMessage.getPlayerInfo().toString());
+                    logger.debug("MT_PLAYER_ROOM_CHANGE (" + inMessage.getFromID() + "): " + inMessage.getPlayerInfo().toString());
                     client.getPlayer().setRoomID(inMessage.getPlayerInfo().getRoomID());
                     client.getPlayer().setStatus(inMessage.getPlayerInfo().getStatus());
 
@@ -236,7 +241,7 @@ public class GameServer extends Thread
                 break;
             case Message.MT_2048_NEW_MULTI:
                 {
-                    System.out.println("MT_2048_NEW_MULTI (" + inMessage.getFromID() + "): ");
+                    logger.debug("MT_2048_NEW_MULTI (" + inMessage.getFromID() + "): ");
 
                     Twenty48Instance instance = new Twenty48Instance(nextInstanceID);
                     ++nextInstanceID;
@@ -300,7 +305,7 @@ public class GameServer extends Thread
                 break;
             case Message.MT_2048_MOVE:
                 {
-                    System.out.println("MT_2048_MOVE (" + inMessage.getFromID() + ")");
+                    logger.debug("MT_2048_MOVE (" + inMessage.getFromID() + ")");
                     Twenty48Instance instance = (Twenty48Instance)client.getInstance();
                     if (instance != null)
                     {
@@ -317,13 +322,13 @@ public class GameServer extends Thread
                     }
                     else
                     {
-                        System.out.println("No instance found");
+                        logger.debug("No instance found");
                     }
                 }
                 break;
             case Message.MT_GAME_INSTANCE_LEAVE:
                 {
-                    System.out.println("MT_GAME_INSTANCE_LEAVE (" + inMessage.getFromID() + ")");
+                    logger.debug("MT_GAME_INSTANCE_LEAVE (" + inMessage.getFromID() + ")");
                     GameInstance instance = client.getInstance();
                     if (instance != null)
                     {
@@ -339,7 +344,7 @@ public class GameServer extends Thread
                 break;
             case Message.MT_GAME_INSTANCE_OVER:
                 {
-                    System.out.println("MT_GAME_INSTANCE_OVER (" + inMessage.getFromID() + ")");
+                    logger.debug("MT_GAME_INSTANCE_OVER (" + inMessage.getFromID() + ")");
                     GameInstance instance = client.getInstance();
                     if (instance != null)
                     {
@@ -352,11 +357,11 @@ public class GameServer extends Thread
                 break;
             case Message.MT_BOGGLE_SUBMIT_WORD:
                 {
-                    System.out.println("MT_BOGGLE_SUBMIT_WORD (" + inMessage.getFromID() + "): " + inMessage.getText());
+                    logger.debug("MT_BOGGLE_SUBMIT_WORD (" + inMessage.getFromID() + "): " + inMessage.getText());
                 }
                 break;
             default:
-                System.out.println("handleMessage: Unrecognized type: " + inMessage.getType());
+                logger.debug("handleMessage: Unrecognized type: " + inMessage.getType());
         }
     }
 
@@ -365,8 +370,8 @@ public class GameServer extends Thread
         try
         {
             ByteBuffer buf = message.assemble();
-            System.out.print("WRITE " + client.getPlayer().getName() + " (" + buf.limit() + "):");
-            Message.printBytes(buf.array(), buf.position(), buf.limit());
+            logger.trace("WRITE " + client.getPlayer().getName() + " (" + buf.limit() + "):" +
+                         Message.getBytesAsString(buf.array(), buf.position(), buf.limit()));
             client.getChannel().write(buf);
         }
         catch (Exception e)
@@ -382,8 +387,8 @@ public class GameServer extends Thread
         {
             try
             {
-                System.out.print("WRITE " + info.getPlayer().getName() + " (" + buf.limit() + "):");
-                Message.printBytes(buf.array(), buf.position(), buf.limit());
+                logger.trace("WRITE " + info.getPlayer().getName() + " (" + buf.limit() + "):" +
+                             Message.getBytesAsString(buf.array(), buf.position(), buf.limit()));
                 info.getChannel().write(buf);
                 buf.rewind();
             }
@@ -414,6 +419,20 @@ public class GameServer extends Thread
 
     public static void main(String[] args)
     {
+        logger.getRootLogger().setLevel(Level.TRACE);
+        try
+        {
+            logger.getRootLogger().addAppender(new FileAppender(new PatternLayout("%r %m%n"), "boggleserver.log"));
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        if (args.length > 0 && args[0].equals("-d"))
+        {
+            logger.getRootLogger().addAppender(new ConsoleAppender(new PatternLayout("%r %C{1} %m%n")));
+        }
+
         GameServer server = new GameServer();
         server.start();
         byte[] buf = new byte[256];

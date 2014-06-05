@@ -4,6 +4,7 @@ import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import org.apache.log4j.Logger;
 
 public class BoggleBoard
 {
@@ -28,6 +29,8 @@ public class BoggleBoard
     private char[][] board;
     private ArrayList<String> wordList;
 
+    private static Logger logger = Logger.getLogger(BoggleBoard.class.getName());
+
     public BoggleBoard()
     {
     }
@@ -38,7 +41,6 @@ public class BoggleBoard
         LinkedList<String> unsortedWordList = new LinkedList<String>();
         try
         {
-            System.out.println("test");
             InputStream in = this.getClass().getResourceAsStream("/bwyatt/game/client/resource/sowpods.txt");
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String nextWord = reader.readLine();
@@ -47,7 +49,6 @@ public class BoggleBoard
                 sowpods.add(nextWord);
                 nextWord = reader.readLine();
             }
-            System.out.println("Sowpods loaded " + sowpods.size() + " words.");
 
             char[] word = new char[16];
             boolean marked[][] = new boolean[4][];
@@ -70,7 +71,7 @@ public class BoggleBoard
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            logger.error(e.toString());
         }
 
         // Sort word list
@@ -97,7 +98,6 @@ public class BoggleBoard
     {
         word[wordLen] = this.board[row][col];
         wordLen++;
-        //System.out.println(new String(word, 0, wordLen) + " (" + subStart + ", " + subEnd + ")");
         
         int l, r, m, cmp;
 
@@ -108,7 +108,6 @@ public class BoggleBoard
         cmp = this.mycmp(word, wordLen, dictionary.get(m));
         while (l < r)
         {
-            //System.out.println("(" + l + ", " + r + ", " + m + ", " + cmp + ")");
             if (cmp < 0)
                 r = m;
             else if (cmp > 0)
@@ -409,13 +408,15 @@ public class BoggleBoard
         return this.board[row][col];
     }
 
-    public void print()
+    public String toString()
     {
+        String ret = "";
         for (int row = 0; row < 4; ++row)
         {
             for (int col = 0; col < 4; ++col)
-                System.out.print(this.board[row][col]);
-            System.out.println();
+                ret += this.board[row][col];
+            ret += "\n";
         }
+        return ret;
     }
 }

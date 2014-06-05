@@ -2,6 +2,7 @@ package bwyatt.game.common;
 
 import java.nio.*;
 import java.util.*;
+import org.apache.log4j.Logger;
 
 public class Message
 {
@@ -27,7 +28,7 @@ public class Message
     public static final int MT_BOGGLE_NEW_GAME = 40;
     public static final int MT_BOGGLE_SUBMIT_WORD = 41;
 
-    ByteBuffer partialBuf;
+    private ByteBuffer partialBuf;
     private int gameVersion;
     private int messageType;
     private int fromID;
@@ -37,7 +38,9 @@ public class Message
     private LinkedList<TileMove> twenty48Moves;
     private PlayerInfo playerInfo;
 
-    private final int FRAME_TAG = 0xCAFEBABE;
+    private static Logger logger = Logger.getLogger(Message.class.getName());
+
+    private static final int FRAME_TAG = 0xCAFEBABE;
 
     public Message()
     {
@@ -71,7 +74,7 @@ public class Message
 
         if (partialBuf != null)
         {
-            System.out.println("Parse: Continue partial buf");
+            logger.error("Parse: Continue partial buf");
             partialBuf.position(partialBuf.limit());
             partialBuf.put(buf);
             partialBuf.rewind();
@@ -83,7 +86,7 @@ public class Message
             // partial message
             partialBuf = buf;
             if (buf.limit() > 0)
-                System.out.println("Parse: too short " + buf.limit());
+                logger.error("Parse: too short " + buf.limit());
             return -1;
         }
 
@@ -91,7 +94,7 @@ public class Message
         if (messageLen > buf.limit())
         {
             partialBuf = buf;
-            System.out.println("Parse: too short for len " + messageLen + " > " + buf.limit());
+            logger.error("Parse: too short for len " + messageLen + " > " + buf.limit());
             return -1;
         }
 
@@ -174,7 +177,7 @@ public class Message
                 this.playerInfo.setStatus(buf.getInt());
                 break;
             default:
-                System.out.println("parse: Unrecognized message type: " + messageType);
+                logger.error("parse: Unrecognized message type: " + messageType);
         }
         return buf.position()-bufStart;
     }
@@ -257,7 +260,7 @@ public class Message
                 buf.putInt(this.playerInfo.getStatus());
                 break;
             default:
-                System.out.println("create: Unrecognized message type: " + this.messageType);
+                logger.error("create: Unrecognized message type: " + this.messageType);
         }
 
         // Put message length
@@ -268,15 +271,16 @@ public class Message
         return buf;
     }
 
-    public static void printBytes(byte[] bytes, int offset, int length)
+    public static String getBytesAsString(byte[] bytes, int offset, int length)
     {
+        String ret = "";
         for (int i = offset; i < length; ++i)
         {
             if ((i-offset) % 4 == 0)
-                System.out.print(" ");
-            System.out.printf("%02x", bytes[i]);
+                ret += " ";
+            ret += String.format("%02x", bytes[i]);
         }
-        System.out.println();
+        return ret;
     }
     
     public int getType()

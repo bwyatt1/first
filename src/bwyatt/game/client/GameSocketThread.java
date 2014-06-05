@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
+import org.apache.log4j.Logger;
 
 import bwyatt.game.common.*;
 
@@ -13,6 +14,8 @@ public class GameSocketThread extends Thread
     boolean die;
     GameFrame listener;
     String serverHostName;
+
+    private static Logger logger = Logger.getLogger(GameSocketThread.class.getName());
 
     public GameSocketThread(GameFrame listener, String serverHostName)
     {
@@ -119,8 +122,7 @@ public class GameSocketThread extends Thread
                     {
                         buf.limit(buf.position());
                         buf.rewind();
-                        System.out.print("Read (" + bytesRead + "):");
-                        Message.printBytes(buf.array(), 0, buf.limit());
+                        logger.trace("Read (" + bytesRead + "):" + Message.getBytesAsString(buf.array(), 0, buf.limit()));
                         message = new Message();
                         int bytesParsed = message.parse(buf);
                         while (bytesParsed > 0)
@@ -151,8 +153,7 @@ public class GameSocketThread extends Thread
             try
             {
                 ByteBuffer buf = message.assemble();
-                System.out.print("Write (" + buf.limit() + "):");
-                Message.printBytes(buf.array(), 0, buf.limit());
+                logger.trace("Write (" + buf.limit() + "):" + Message.getBytesAsString(buf.array(), 0, buf.limit()));
                 System.out.flush();
                 this.channel.write(buf);
             }

@@ -168,7 +168,6 @@ public class Twenty48Panel extends JPanel implements ActionListener
 
     public void updateMultiTextArea()
     {
-        System.out.println("Multi text");
         String text = "";
         text += myInfo.getName();
         if (myInfo.getStatus() == PlayerInfo.STATUS_ACTIVE)
