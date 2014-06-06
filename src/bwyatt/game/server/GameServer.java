@@ -114,7 +114,7 @@ public class GameServer extends Thread
                         }
                         catch (Exception e)
                         {
-                            e.printStackTrace();
+                            //e.printStackTrace();
                         }
                         if (bytesRead == -1)
                         {
@@ -355,9 +355,84 @@ public class GameServer extends Thread
                     }
                 }
                 break;
-            case Message.MT_BOGGLE_SUBMIT_WORD:
+            case Message.MT_BOGGLE_NEW_MULTI:
                 {
-                    logger.debug("MT_BOGGLE_SUBMIT_WORD (" + inMessage.getFromID() + "): " + inMessage.getText());
+                    logger.debug("MT_BOGGLE_NEW_MULTI (" + inMessage.getFromID() + "): " + inMessage.getText());
+
+                    BoggleInstance instance = new BoggleInstance(nextInstanceID);
+                    ++nextInstanceID;
+
+                    Message newMultiMessage = new Message();
+                    newMultiMessage.setType(Message.MT_BOGGLE_NEW_MULTI);
+                    newMultiMessage.setFromID(client.getPlayer().getID());
+                    newMultiMessage.setVal(instance.getID());
+
+                    // Find ready 2048 clients and change to active
+                    for (ClientInfo info : connectedClients)
+                    {
+                        if (info.getPlayer().getShowing() == PlayerInfo.GAME_BOGGLE &&
+                            info.getPlayer().getRoomID() == client.getPlayer().getRoomID() &&
+                            info.getPlayer().getStatus() == PlayerInfo.STATUS_READY)
+                        {
+                            instance.addClient(info);
+                            info.setInstance(instance);
+                            sendMessage(info, newMultiMessage);
+                            info.getPlayer().setStatus(PlayerInfo.STATUS_ACTIVE);
+
+                            Message statusMessage = new Message();
+                            statusMessage.setType(Message.MT_PLAYER_ROOM_CHANGE);
+                            statusMessage.setFromID(info.getPlayer().getID());
+                            statusMessage.setPlayerInfo(info.getPlayer());
+                            broadcast(statusMessage);
+                        }
+                    }
+
+                    // Tell each player who else is in this instance
+                    for (ClientInfo info : instance.getClients())
+                    {
+                        Message joinMessage = new Message();
+                        joinMessage.setType(Message.MT_GAME_INSTANCE_JOIN);
+                        joinMessage.setFromID(info.getPlayer().getID());
+                        joinMessage.setVal(instance.getID());
+                        instanceBroadcast(instance, joinMessage);
+                    }
+
+                    instance.newGame();
+
+                    Message boardMessage = new Message();
+                    boardMessage.setType(Message.MT_BOGGLE_BOARD_UPDATE);
+                    boardMessage.setBoggleBoard(instance.getBoard(info);
+                    for (ClientInfo info : instance.getClients())
+                    {
+                        boardMessage.setFromID(info.getPlayer().getID());
+                        instanceBroadcast(instance, boardMessage);
+                    }
+
+                    Room room = Room.getRoomFromID(client.getPlayer().getRoomID());
+                    instance.startTimer(room.getDuration());
+
+                    Message timerMessage = new Message();
+                    timerMessage.setType(Message.MT_GAME_INSTANCE_START_TIMER);
+                    timerMessage.setFromID(SERVER_ID);
+                    timerMessage.setVal(room.getDuration());
+                    instanceBroadcast(instance, timerMessage);
+                }
+                break;
+            case Message.MT_BOGGLE_NEW_WORD:
+                {
+                    logger.debug("MT_BOGGLE_NEW_WORD (" + inMessage.getFromID() + "): " + inMessage.getText());
+                    BoggleInstance instance = (BoggleInstance)client.getInstance();
+                    String word = inMessage.getText();
+                    if (instance.validateWord(client, word))
+                    {
+                        instance.addWord(client, word);
+
+                        Message outMessage = new Message();
+                        outMessage.setType(Message.MT_BOGGLE_NEW_WORD);
+                        outMessage.setFromID(client.getPlayerInfo().getID());
+                        outMessage.setText(word);
+                        instanceBroadcast(instance, outMessage);
+                    }
                 }
                 break;
             default:

@@ -25,8 +25,9 @@ public class Message
     public static final int MT_2048_NEW_MULTI = 21;
     public static final int MT_2048_BOARD_UPDATE = 22;
     public static final int MT_2048_MOVE = 23;
-    public static final int MT_BOGGLE_NEW_GAME = 40;
-    public static final int MT_BOGGLE_SUBMIT_WORD = 41;
+    public static final int MT_BOGGLE_NEW_MULTI = 40;
+    public static final int MT_BOGGLE_BOARD_UPDATE = 41;
+    public static final int MT_BOGGLE_NEW_WORD = 42;
 
     private ByteBuffer partialBuf;
     private int gameVersion;
@@ -36,6 +37,7 @@ public class Message
     private int val;
     private Twenty48Board twenty48Board;
     private LinkedList<TileMove> twenty48Moves;
+    private BoggleBoard boggleBoard;
     private PlayerInfo playerInfo;
 
     private static Logger logger = Logger.getLogger(Message.class.getName());
@@ -48,18 +50,12 @@ public class Message
         messageType = MT_NONE;
         fromID = -1;
         text = null;
+        val = -1;
+        twenty48Board = null;
+        twenty48Moves = null;
+        boggleBoard = null;
+        playerInfo = null;
         partialBuf = null;
-    }
-
-    public Message(int type, int fromID, String text)
-    {
-        this.messageType = type;
-        this.fromID = fromID;
-        this.text = text;
-        this.val = -1;
-        this.twenty48Board = null;
-        this.gameVersion = -1;
-        this.partialBuf = null;
     }
 
     /*
@@ -108,7 +104,7 @@ public class Message
         switch (messageType)
         {
             case MT_CHAT:
-            case MT_BOGGLE_SUBMIT_WORD:
+            case MT_BOGGLE_NEW_WORD:
                 int textLength = buf.getInt();
                 byte[] textBytes = new byte[textLength];
                 buf.get(textBytes);
@@ -122,6 +118,7 @@ public class Message
             case MT_GAME_INSTANCE_START_TIMER:
             case MT_2048_NEW_MULTI:
             case MT_2048_MOVE:
+            case MT_BOGGLE_NEW_MULTI:
                 this.val = buf.getInt();
                 break;
             case MT_2048_NEW_SOLO:
@@ -149,6 +146,19 @@ public class Message
                                                      (int)buf.get(), (int)buf.get());
                     twenty48Moves.add(tileMove);
                 }
+                break;
+            case MT_BOGGLE_BOARD_UPDATE:
+                char[][] board = new char[4][];
+                for (int row = 0; row < 4; ++row)
+                {
+                    board[row] = new int[4];
+                    for (int col = 0; col < 4; ++col)
+                    {
+                        board[row][col] = (char)buf.get();
+                    }
+                }
+                boggleBoard = new BoggleBoard();
+                boggleBoard.setBoard(board);
                 break;
             case MT_JOIN_CHAT:
             case MT_NEW_PLAYER:
@@ -196,7 +206,7 @@ public class Message
         switch (this.messageType)
         {
             case MT_CHAT:
-            case MT_BOGGLE_SUBMIT_WORD:
+            case MT_BOGGLE_NEW_WORD:
                 buf.putInt(this.text.length());
                 buf.put(this.text.getBytes());
                 break;
@@ -208,6 +218,7 @@ public class Message
             case MT_GAME_INSTANCE_START_TIMER:
             case MT_2048_NEW_MULTI:
             case MT_2048_MOVE:
+            case MT_BOGGLE_NEW_MULTI:
                 buf.putInt(this.val);
                 break;
             case MT_2048_NEW_SOLO:
@@ -237,6 +248,15 @@ public class Message
                         buf.put((byte)(tileMove.getDir() & 0xff));
                         buf.put((byte)(tileMove.getDist() & 0xff));
                         buf.put((byte)(tileMove.getVal() & 0xff));
+                    }
+                }
+                break;
+            case MT_BOGGLE_BOARD_UPDATE:
+                for (int row = 0; row < 4; ++row)
+                {
+                    for (int col = 0; col < 4; ++col)
+                    {
+                        buf.put((byte)(this.boggleBoard.get(row, col) & 0xff));
                     }
                 }
                 break;
@@ -351,6 +371,16 @@ public class Message
     public LinkedList<TileMove> getTwenty48Moves()
     {
         return this.twenty48Moves;
+    }
+
+    public void setBoggleBoard(BoggleBoard board)
+    {
+        this.boggleBoard = boggleBoard;
+    }
+
+    public BoggleBoard getBoggleBoard(BoggleBoard board)
+    {
+        return this.boggleBoard;
     }
 
     public void setPlayerInfo(PlayerInfo playerInfo)

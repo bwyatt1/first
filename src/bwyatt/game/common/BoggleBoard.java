@@ -403,6 +403,24 @@ public class BoggleBoard
         return null;
     }
 
+    public void setBoard(char[][] board)
+    {
+        this.board = new char[4][];
+        for (int row = 0; row < 4; ++row)
+        {
+            this.board[row] = new char[4];
+            for (int col = 0; col < 4; ++col)
+            {
+                this.board[row][col] = board[row][col];
+            }
+        }
+    }
+
+    public chat[][] getBoard()
+    {
+        return this.board;
+    }
+
     public char get(int row, int col)
     {
         return this.board[row][col];
