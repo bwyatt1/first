@@ -17,7 +17,7 @@ public class BoggleInstance extends GameInstance
 
     public void newGame()
     {
-        board.newGame();
+        board.generateNew();
         for (ClientInfo client : this.clients)
         {
             foundWords.put(client, new LinkedList<String>());
@@ -33,6 +33,7 @@ public class BoggleInstance extends GameInstance
     {
         if (board.contains(word) && !foundWords.get(client).contains(word))
             return true;
+        return false;
     }
 
     public void addWord(ClientInfo client, String word)

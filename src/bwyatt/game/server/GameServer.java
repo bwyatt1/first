@@ -401,7 +401,7 @@ public class GameServer extends Thread
 
                     Message boardMessage = new Message();
                     boardMessage.setType(Message.MT_BOGGLE_BOARD_UPDATE);
-                    boardMessage.setBoggleBoard(instance.getBoard(info);
+                    boardMessage.setBoggleBoard(instance.getBoard());
                     for (ClientInfo info : instance.getClients())
                     {
                         boardMessage.setFromID(info.getPlayer().getID());
@@ -429,7 +429,7 @@ public class GameServer extends Thread
 
                         Message outMessage = new Message();
                         outMessage.setType(Message.MT_BOGGLE_NEW_WORD);
-                        outMessage.setFromID(client.getPlayerInfo().getID());
+                        outMessage.setFromID(client.getPlayer().getID());
                         outMessage.setText(word);
                         instanceBroadcast(instance, outMessage);
                     }

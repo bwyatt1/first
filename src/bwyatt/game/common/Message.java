@@ -105,10 +105,12 @@ public class Message
         {
             case MT_CHAT:
             case MT_BOGGLE_NEW_WORD:
-                int textLength = buf.getInt();
-                byte[] textBytes = new byte[textLength];
-                buf.get(textBytes);
-                this.text = new String(textBytes);
+                {
+                    int textLength = buf.getInt();
+                    byte[] textBytes = new byte[textLength];
+                    buf.get(textBytes);
+                    this.text = new String(textBytes);
+                }
                 break;
             case MT_ID_UPDATE:
             case MT_PLAYER_SHOWING_GAME:
@@ -119,72 +121,84 @@ public class Message
             case MT_2048_NEW_MULTI:
             case MT_2048_MOVE:
             case MT_BOGGLE_NEW_MULTI:
-                this.val = buf.getInt();
+                {
+                    this.val = buf.getInt();
+                }
                 break;
             case MT_2048_NEW_SOLO:
             case MT_GAME_INSTANCE_OVER:
             case MT_PLAYER_CLOSED:
                 break;
             case MT_2048_BOARD_UPDATE:
-                int[][] board = new int[4][];
-                for (int row = 0; row < 4; ++row)
                 {
-                    board[row] = new int[4];
-                    for (int col = 0; col < 4; ++col)
+                    int[][] board = new int[4][];
+                    for (int row = 0; row < 4; ++row)
                     {
-                        board[row][col] = (int)buf.get();
+                        board[row] = new int[4];
+                        for (int col = 0; col < 4; ++col)
+                        {
+                            board[row][col] = (int)buf.get();
+                        }
                     }
-                }
-                twenty48Board = new Twenty48Board();
-                twenty48Board.setBoard(board);
-                twenty48Board.setScore(buf.getInt());
-                twenty48Moves = new LinkedList<TileMove>();
-                int numMoves = buf.getInt();
-                for (int i = 0; i < numMoves; ++i)
-                {
-                    TileMove tileMove = new TileMove((int)buf.get(), (int)buf.get(), (int)buf.get(),
-                                                     (int)buf.get(), (int)buf.get());
-                    twenty48Moves.add(tileMove);
+                    twenty48Board = new Twenty48Board();
+                    twenty48Board.setBoard(board);
+                    twenty48Board.setScore(buf.getInt());
+                    twenty48Moves = new LinkedList<TileMove>();
+                    int numMoves = buf.getInt();
+                    for (int i = 0; i < numMoves; ++i)
+                    {
+                        TileMove tileMove = new TileMove((int)buf.get(), (int)buf.get(), (int)buf.get(),
+                                                         (int)buf.get(), (int)buf.get());
+                        twenty48Moves.add(tileMove);
+                    }
                 }
                 break;
             case MT_BOGGLE_BOARD_UPDATE:
-                char[][] board = new char[4][];
-                for (int row = 0; row < 4; ++row)
                 {
-                    board[row] = new int[4];
-                    for (int col = 0; col < 4; ++col)
+                    char[][] board = new char[4][];
+                    for (int row = 0; row < 4; ++row)
                     {
-                        board[row][col] = (char)buf.get();
+                        board[row] = new char[4];
+                        for (int col = 0; col < 4; ++col)
+                        {
+                            board[row][col] = (char)buf.get();
+                        }
                     }
+                    boggleBoard = new BoggleBoard();
+                    boggleBoard.setBoard(board);
                 }
-                boggleBoard = new BoggleBoard();
-                boggleBoard.setBoard(board);
                 break;
             case MT_JOIN_CHAT:
             case MT_NEW_PLAYER:
             case MT_PLAYER_INFO_CHANGE:
-                nameLength = buf.getInt();
-                nameBytes = new byte[nameLength];
-                buf.get(nameBytes);
-                this.playerInfo = new PlayerInfo();
-                this.playerInfo.setName(new String(nameBytes));
-                this.playerInfo.setIconID(buf.getInt());
+                {
+                    nameLength = buf.getInt();
+                    nameBytes = new byte[nameLength];
+                    buf.get(nameBytes);
+                    this.playerInfo = new PlayerInfo();
+                    this.playerInfo.setName(new String(nameBytes));
+                    this.playerInfo.setIconID(buf.getInt());
+                }
                 break;
             case MT_PLAYER_ROOM_CHANGE:
-                this.playerInfo = new PlayerInfo();
-                this.playerInfo.setRoomID(buf.getInt());
-                this.playerInfo.setStatus(buf.getInt());
+                {
+                    this.playerInfo = new PlayerInfo();
+                    this.playerInfo.setRoomID(buf.getInt());
+                    this.playerInfo.setStatus(buf.getInt());
+                }
                 break;
             case MT_PLAYER_LIST:
-                nameLength = buf.getInt();
-                nameBytes = new byte[nameLength];
-                buf.get(nameBytes);
-                this.playerInfo = new PlayerInfo();
-                this.playerInfo.setName(new String(nameBytes));
-                this.playerInfo.setIconID(buf.getInt());
-                this.playerInfo.setShowing(buf.getInt());
-                this.playerInfo.setRoomID(buf.getInt());
-                this.playerInfo.setStatus(buf.getInt());
+                {
+                    nameLength = buf.getInt();
+                    nameBytes = new byte[nameLength];
+                    buf.get(nameBytes);
+                    this.playerInfo = new PlayerInfo();
+                    this.playerInfo.setName(new String(nameBytes));
+                    this.playerInfo.setIconID(buf.getInt());
+                    this.playerInfo.setShowing(buf.getInt());
+                    this.playerInfo.setRoomID(buf.getInt());
+                    this.playerInfo.setStatus(buf.getInt());
+                }
                 break;
             default:
                 logger.error("parse: Unrecognized message type: " + messageType);
@@ -207,8 +221,10 @@ public class Message
         {
             case MT_CHAT:
             case MT_BOGGLE_NEW_WORD:
-                buf.putInt(this.text.length());
-                buf.put(this.text.getBytes());
+                {
+                    buf.putInt(this.text.length());
+                    buf.put(this.text.getBytes());
+                }
                 break;
             case MT_ID_UPDATE:
             case MT_PLAYER_SHOWING_GAME:
@@ -219,65 +235,77 @@ public class Message
             case MT_2048_NEW_MULTI:
             case MT_2048_MOVE:
             case MT_BOGGLE_NEW_MULTI:
-                buf.putInt(this.val);
+                {
+                    buf.putInt(this.val);
+                }
                 break;
             case MT_2048_NEW_SOLO:
             case MT_PLAYER_CLOSED:
             case MT_GAME_INSTANCE_OVER:
                 break;
             case MT_2048_BOARD_UPDATE:
-                for (int row = 0; row < 4; ++row)
                 {
-                    for (int col = 0; col < 4; ++col)
+                    for (int row = 0; row < 4; ++row)
                     {
-                        buf.put((byte)(this.twenty48Board.getTile(row, col) & 0xff));
+                        for (int col = 0; col < 4; ++col)
+                        {
+                            buf.put((byte)(this.twenty48Board.getTile(row, col) & 0xff));
+                        }
                     }
-                }
-                buf.putInt(this.twenty48Board.getScore());
-                if (this.twenty48Moves == null)
-                {
-                    buf.putInt(0);
-                }
-                else
-                {
-                    buf.putInt(this.twenty48Moves.size());
-                    for (TileMove tileMove : this.twenty48Moves)
+                    buf.putInt(this.twenty48Board.getScore());
+                    if (this.twenty48Moves == null)
                     {
-                        buf.put((byte)(tileMove.getRow() & 0xff));
-                        buf.put((byte)(tileMove.getCol() & 0xff));
-                        buf.put((byte)(tileMove.getDir() & 0xff));
-                        buf.put((byte)(tileMove.getDist() & 0xff));
-                        buf.put((byte)(tileMove.getVal() & 0xff));
+                        buf.putInt(0);
+                    }
+                    else
+                    {
+                        buf.putInt(this.twenty48Moves.size());
+                        for (TileMove tileMove : this.twenty48Moves)
+                        {
+                            buf.put((byte)(tileMove.getRow() & 0xff));
+                            buf.put((byte)(tileMove.getCol() & 0xff));
+                            buf.put((byte)(tileMove.getDir() & 0xff));
+                            buf.put((byte)(tileMove.getDist() & 0xff));
+                            buf.put((byte)(tileMove.getVal() & 0xff));
+                        }
                     }
                 }
                 break;
             case MT_BOGGLE_BOARD_UPDATE:
-                for (int row = 0; row < 4; ++row)
                 {
-                    for (int col = 0; col < 4; ++col)
+                    for (int row = 0; row < 4; ++row)
                     {
-                        buf.put((byte)(this.boggleBoard.get(row, col) & 0xff));
+                        for (int col = 0; col < 4; ++col)
+                        {
+                            buf.put((byte)(this.boggleBoard.get(row, col) & 0xff));
+                        }
                     }
                 }
                 break;
             case MT_JOIN_CHAT:
             case MT_NEW_PLAYER:
             case MT_PLAYER_INFO_CHANGE:
-                buf.putInt(this.playerInfo.getName().length());
-                buf.put(this.playerInfo.getName().getBytes());
-                buf.putInt(this.playerInfo.getIconID());
+                {
+                    buf.putInt(this.playerInfo.getName().length());
+                    buf.put(this.playerInfo.getName().getBytes());
+                    buf.putInt(this.playerInfo.getIconID());
+                }
                 break;
             case MT_PLAYER_ROOM_CHANGE:
-                buf.putInt(this.playerInfo.getRoomID());
-                buf.putInt(this.playerInfo.getStatus());
+                {
+                    buf.putInt(this.playerInfo.getRoomID());
+                    buf.putInt(this.playerInfo.getStatus());
+                }
                 break;
             case MT_PLAYER_LIST:
-                buf.putInt(this.playerInfo.getName().length());
-                buf.put(this.playerInfo.getName().getBytes());
-                buf.putInt(this.playerInfo.getIconID());
-                buf.putInt(this.playerInfo.getShowing());
-                buf.putInt(this.playerInfo.getRoomID());
-                buf.putInt(this.playerInfo.getStatus());
+                {
+                    buf.putInt(this.playerInfo.getName().length());
+                    buf.put(this.playerInfo.getName().getBytes());
+                    buf.putInt(this.playerInfo.getIconID());
+                    buf.putInt(this.playerInfo.getShowing());
+                    buf.putInt(this.playerInfo.getRoomID());
+                    buf.putInt(this.playerInfo.getStatus());
+                }
                 break;
             default:
                 logger.error("create: Unrecognized message type: " + this.messageType);

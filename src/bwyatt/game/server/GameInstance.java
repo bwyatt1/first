@@ -8,6 +8,7 @@ public class GameInstance
 {
     protected int id;
     protected LinkedList<ClientInfo> clients;
+    protected long endTime;
 
     public GameInstance(int id)
     {
@@ -25,6 +26,16 @@ public class GameInstance
     {
         this.clients.remove(info);
         info.setInstance(null);
+    }
+
+    public void startTimer(int duration)
+    {
+        endTime = System.nanoTime()/1000 + duration*1000;
+    }
+
+    public long getActionTime()
+    {
+        return endTime;
     }
 
     public LinkedList<ClientInfo> getClients()

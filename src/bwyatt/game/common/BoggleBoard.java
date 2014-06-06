@@ -416,7 +416,7 @@ public class BoggleBoard
         }
     }
 
-    public chat[][] getBoard()
+    public char[][] getBoard()
     {
         return this.board;
     }
