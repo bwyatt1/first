@@ -24,6 +24,7 @@ public class SpellingPanel extends JPanel
             letterLabel[i] = new JLabel();
             this.add(letterLabel[i]);
         }
+        this.setOpaque(false);
     }
 
     public void addLetter(char letter, boolean matched)

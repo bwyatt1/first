@@ -5,6 +5,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.util.*;
 import javax.swing.*;
+import javax.swing.border.*;
 import org.apache.log4j.*;
 
 import bwyatt.game.client.boggle.*;
@@ -14,7 +15,7 @@ import bwyatt.game.common.*;
 /*
  * Primary GUI class for the client
  */
-public class GameFrame extends JFrame implements ActionListener, MouseListener
+public class GameFrame extends JFrame implements ActionListener, MouseListener, ComponentListener
 {
     private JPanel gamesPanel;
     private BogglePanel bogglePanel;
@@ -33,7 +34,8 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
     private JLabel settingsLabel;
     private Config config;
     private PreferencesPane preferencesPane;
-    private JSplitPane splitPane;
+    private JLabel background;
+    private JPanel mainPanel;
 
     private static Logger logger = Logger.getLogger(GameFrame.class.getName());
 
@@ -50,6 +52,7 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
         preferencesPane = new PreferencesPane(this);
 
         activePanel = new JPanel();
+        activePanel.setOpaque(false);
         playerPanel = new PlayerPanel();
         chatBoxPanel = new ChatBoxPanel();
         chatInput = new JTextField();
@@ -64,38 +67,46 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
         settingsLabel.addMouseListener(this);
 
         JPanel navPanel = new JPanel();
+        navPanel.setOpaque(false);
         navPanel.setLayout(new BorderLayout());
         navPanel.add(backLabel, BorderLayout.WEST);
         navPanel.add(homeLabel, BorderLayout.CENTER);
         navPanel.add(settingsLabel, BorderLayout.EAST);
 
-        JPanel chatPanel = new JPanel();
-        SpringLayout chatLayout = new SpringLayout();
-        chatPanel.setLayout(chatLayout);
-        chatPanel.add(navPanel);
-        chatLayout.putConstraint(SpringLayout.NORTH, navPanel, 5, SpringLayout.NORTH, chatPanel);
-        chatLayout.putConstraint(SpringLayout.WEST, navPanel, 5, SpringLayout.WEST, chatPanel);
-        chatLayout.putConstraint(SpringLayout.EAST, navPanel, -5, SpringLayout.EAST, chatPanel);
-        chatPanel.add(playerPanel);
-        chatLayout.putConstraint(SpringLayout.NORTH, playerPanel, 5, SpringLayout.SOUTH, navPanel);
-        chatLayout.putConstraint(SpringLayout.WEST, playerPanel, 5, SpringLayout.WEST, chatPanel);
-        chatLayout.putConstraint(SpringLayout.EAST, playerPanel, -5, SpringLayout.EAST, chatPanel);
-        chatPanel.add(chatBoxPanel);
-        chatLayout.putConstraint(SpringLayout.NORTH, chatBoxPanel, 5, SpringLayout.SOUTH, playerPanel);
-        chatLayout.putConstraint(SpringLayout.WEST, chatBoxPanel, 5, SpringLayout.WEST, chatPanel);
-        chatLayout.putConstraint(SpringLayout.EAST, chatBoxPanel, -5, SpringLayout.EAST, chatPanel);
-        chatPanel.add(chatInput);
-        chatLayout.putConstraint(SpringLayout.SOUTH, chatBoxPanel, -5, SpringLayout.NORTH, chatInput);
-        chatLayout.putConstraint(SpringLayout.WEST, chatInput, 5, SpringLayout.WEST, chatPanel);
-        chatLayout.putConstraint(SpringLayout.EAST, chatInput, -5, SpringLayout.EAST, chatPanel);
-        chatLayout.putConstraint(SpringLayout.SOUTH, chatInput, -5, SpringLayout.SOUTH, chatPanel);
-        chatLayout.getConstraints(chatInput).setHeight(Spring.constant(chatInput.getPreferredSize().height));
+        JPanel sidePanel = new JPanel();
+        sidePanel.setPreferredSize(new Dimension(300, 20));
+        sidePanel.setOpaque(false);
+        SpringLayout sideLayout = new SpringLayout();
+        sidePanel.setLayout(sideLayout);
+        sidePanel.add(navPanel);
+        sideLayout.putConstraint(SpringLayout.NORTH, navPanel, 5, SpringLayout.NORTH, sidePanel);
+        sideLayout.putConstraint(SpringLayout.WEST, navPanel, 5, SpringLayout.WEST, sidePanel);
+        sideLayout.putConstraint(SpringLayout.EAST, navPanel, -5, SpringLayout.EAST, sidePanel);
+        sidePanel.add(playerPanel);
+        sideLayout.putConstraint(SpringLayout.NORTH, playerPanel, 5, SpringLayout.SOUTH, navPanel);
+        sideLayout.putConstraint(SpringLayout.WEST, playerPanel, 5, SpringLayout.WEST, sidePanel);
+        sideLayout.putConstraint(SpringLayout.EAST, playerPanel, -5, SpringLayout.EAST, sidePanel);
+        sidePanel.add(chatBoxPanel);
+        sideLayout.putConstraint(SpringLayout.NORTH, chatBoxPanel, 5, SpringLayout.SOUTH, playerPanel);
+        sideLayout.putConstraint(SpringLayout.WEST, chatBoxPanel, 5, SpringLayout.WEST, sidePanel);
+        sideLayout.putConstraint(SpringLayout.EAST, chatBoxPanel, -5, SpringLayout.EAST, sidePanel);
+        sidePanel.add(chatInput);
+        sideLayout.putConstraint(SpringLayout.SOUTH, chatBoxPanel, -5, SpringLayout.NORTH, chatInput);
+        sideLayout.putConstraint(SpringLayout.WEST, chatInput, 5, SpringLayout.WEST, sidePanel);
+        sideLayout.putConstraint(SpringLayout.EAST, chatInput, -5, SpringLayout.EAST, sidePanel);
+        sideLayout.putConstraint(SpringLayout.SOUTH, chatInput, -5, SpringLayout.SOUTH, sidePanel);
+        sideLayout.getConstraints(chatInput).setHeight(Spring.constant(chatInput.getPreferredSize().height));
 
-        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setLeftComponent(activePanel);
-        splitPane.setRightComponent(chatPanel);
-        //splitPane.setResizeWeight(0.5d);
-        this.getContentPane().add(splitPane);
+        mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(activePanel, BorderLayout.CENTER);
+        mainPanel.add(sidePanel, BorderLayout.EAST);
+        mainPanel.setOpaque(false);
+        
+        background = new JLabel(ImageCache.getMainBackground());
+        this.getLayeredPane().add(background, new Integer(100), 0);
+        this.getLayeredPane().add(mainPanel, new Integer(101), 0);
+        this.addComponentListener(this);
 
         config = new Config(CONFIG_FILENAME);
 
@@ -188,6 +199,7 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
         this.setTitle("Bill's Games");
 
         gamesPanel = new JPanel();
+        gamesPanel.setOpaque(false);
         boggleLabel = new JLabel();
         boggleLabel.setIcon(ImageCache.getLargeLetter('B'));
         boggleLabel.setText("Boggle");
@@ -488,7 +500,10 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
             String chatText = chatInput.getText();
             if (!chatText.equals(""))
             {
-                Message message = new Message(Message.MT_CHAT, myInfo.getID(), chatText);
+                Message message = new Message();
+                message.setType(Message.MT_CHAT);
+                message.setFromID(myInfo.getID());
+                message.setText(chatText);
                 socketThread.sendMessage(message);
                 chatInput.setText("");
             }
@@ -499,6 +514,13 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
             else
                 activePanel.requestFocusInWindow();
         }
+    }
+
+    public void componentResized(ComponentEvent e)
+    {
+        background.setSize(this.getLayeredPane().getSize());
+        mainPanel.setSize(this.getLayeredPane().getSize());
+        mainPanel.revalidate();
     }
 
     public void mouseClicked(MouseEvent e)
@@ -525,10 +547,14 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener
         }
     }
 
+    // ignored events
     public void mousePressed(MouseEvent e) {}
     public void mouseReleased(MouseEvent e) {}
     public void mouseEntered(MouseEvent e) {}
     public void mouseExited(MouseEvent e) {}
+    public void componentHidden(ComponentEvent e) {}
+    public void componentMoved(ComponentEvent e) {}
+    public void componentShown(ComponentEvent e) {}
 
     /*
      * Primary event handling for messages from the server

@@ -10,6 +10,7 @@ import javax.swing.*;
 public class ImageCache
 {
     protected static ImageCache instance = null;
+    protected ImageIcon mainBackground;
     protected ImageIcon[] largeLetters;
     protected ImageIcon[] smallLetters;
     protected ImageIcon boggleBoard;
@@ -38,6 +39,8 @@ public class ImageCache
     {
         BufferedImage bufferedImage;
         Graphics2D graphics;
+
+        mainBackground = new ImageIcon(this.getClass().getResource("resource/main_background.png"));
 
         largeLetters = new ImageIcon[26];
         smallLetters = new ImageIcon[26];
@@ -217,5 +220,10 @@ public class ImageCache
     public static ImageIcon getBoggleHiD2()
     {
         return instance.boggleHiEdgeD2;
+    }
+
+    public static ImageIcon getMainBackground()
+    {
+        return instance.mainBackground;
     }
 }

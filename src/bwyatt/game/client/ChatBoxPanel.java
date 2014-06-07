@@ -3,6 +3,7 @@ package bwyatt.game.client;
 import java.awt.*;
 import java.util.*;
 import javax.swing.*;
+import javax.swing.border.*;
 import javax.swing.text.*;
 
 import bwyatt.game.common.*;
@@ -34,9 +35,12 @@ public class ChatBoxPanel extends JPanel
         scrollPane = new JScrollPane(textPane);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setOpaque(false);
 
         this.setLayout(new BorderLayout());
         this.add(scrollPane, BorderLayout.CENTER);
+
+        this.setOpaque(false);
     }
 
     public void addChat(PlayerInfo player, String text)
@@ -59,6 +63,7 @@ public class ChatBoxPanel extends JPanel
         
         // scroll to bottom
         textPane.setCaretPosition(textPane.getDocument().getLength());
+        textPane.repaint();
     }
 
     public void updatePlayerStyle(PlayerInfo player)
@@ -119,6 +124,7 @@ public class ChatBoxPanel extends JPanel
 
         // scroll to bottom
         textPane.setCaretPosition(textPane.getDocument().getLength());
+        textPane.repaint();
     }
 
     private class Chat

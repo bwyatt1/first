@@ -95,6 +95,8 @@ public class Twenty48BoardPanel extends JPanel
         gbc.ipady = 10;
         gbc.gridy++;
         this.add(timerLabel, gbc);
+
+        this.setOpaque(false);
     }
 
     public void setPanelSize(int panelSize)

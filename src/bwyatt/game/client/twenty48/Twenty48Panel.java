@@ -111,6 +111,7 @@ public class Twenty48Panel extends JPanel implements ActionListener
         JLabel soloLabel = new JLabel("Solo");
         soloLabel.setIcon(ImageCache.getTwenty48Tile(10));
         soloLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        soloLabel.setOpaque(false);
         soloLabel.addMouseListener(new MouseAdapter()
             {
                 public void mouseClicked(MouseEvent e)
@@ -155,11 +156,13 @@ public class Twenty48Panel extends JPanel implements ActionListener
         multiPanel.add(multiPlayersPane);
         multiPanel.add(readyBox);
         multiPanel.add(multiStartButton);
+        multiPanel.setOpaque(false);
 
         this.setLayout(new GridLayout(1, 2));
         this.add(soloLabel);
         this.add(multiPanel);
 
+        this.setOpaque(false);
         this.revalidate();
         this.repaint();
 

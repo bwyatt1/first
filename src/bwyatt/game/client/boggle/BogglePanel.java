@@ -42,6 +42,7 @@ public class BogglePanel extends JPanel
         mainLayout.putConstraint(SpringLayout.WEST, foundWordsPanel, 5, SpringLayout.EAST, boggleBoardPanel);
         mainLayout.putConstraint(SpringLayout.NORTH, foundWordsPanel, 5, SpringLayout.NORTH, this);
 
+        this.setOpaque(false);
         this.setupKeys();
     }
 

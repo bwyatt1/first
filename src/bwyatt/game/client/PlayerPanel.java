@@ -28,6 +28,7 @@ public class PlayerPanel extends JPanel
         otherPlayersPanel = new JPanel();
         this.add(otherPlayersPanel);
         updateOtherPlayers();
+        this.setOpaque(false);
     }
 
     public void updateOtherPlayers()
