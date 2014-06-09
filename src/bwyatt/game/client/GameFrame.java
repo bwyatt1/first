@@ -66,15 +66,32 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener, 
         settingsLabel = new JLabel(ImageCache.getSettingsIcon());
         settingsLabel.addMouseListener(this);
 
-        JPanel navPanel = new JPanel();
-        navPanel.setOpaque(false);
-        navPanel.setLayout(new BorderLayout());
-        navPanel.add(backLabel, BorderLayout.WEST);
-        navPanel.add(homeLabel, BorderLayout.CENTER);
-        navPanel.add(settingsLabel, BorderLayout.EAST);
+        JLabel navBackground = new JLabel(ImageCache.getNavBackground());
+        JPanel navIconPanel = new JPanel();
+        navIconPanel.setOpaque(false);
+        navIconPanel.setLayout(null);
+        backLabel.setLocation(6, 7);
+        backLabel.setSize(backLabel.getPreferredSize());
+        navIconPanel.add(backLabel);
+        homeLabel.setLocation(60, 7);
+        homeLabel.setSize(homeLabel.getPreferredSize());
+        navIconPanel.add(homeLabel);
+        settingsLabel.setLocation(242, 7);
+        settingsLabel.setSize(settingsLabel.getPreferredSize());
+        navIconPanel.add(settingsLabel);
+
+        JLayeredPane navPanel = new JLayeredPane();
+        navPanel.setSize(navBackground.getPreferredSize());
+        navPanel.setPreferredSize(navBackground.getPreferredSize());
+        navBackground.setLocation(0, 0);
+        navBackground.setSize(navBackground.getPreferredSize());
+        navPanel.add(navBackground, new Integer(0), 0);
+        navIconPanel.setLocation(0, 0);
+        navIconPanel.setSize(navBackground.getPreferredSize());
+        navPanel.add(navIconPanel, new Integer(1), 0);
 
         JPanel sidePanel = new JPanel();
-        sidePanel.setPreferredSize(new Dimension(300, 20));
+        sidePanel.setPreferredSize(new Dimension(310, 20));
         sidePanel.setOpaque(false);
         SpringLayout sideLayout = new SpringLayout();
         sidePanel.setLayout(sideLayout);
@@ -394,8 +411,7 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener, 
         activePanel.removeAll();
         gamesPanel = null;
 
-        this.bogglePanel = new BogglePanel(this);
-        bogglePanel.newGame();
+        this.bogglePanel = new BogglePanel(this, myInfo, players);
         activePanel.setLayout(new GridLayout(1, 1));
         activePanel.add(bogglePanel); 
         this.revalidate();
@@ -485,6 +501,15 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener, 
         socketThread.sendMessage(message);
     }
 
+    public void boggleNewWord(String word)
+    {
+        Message message = new Message();
+        message.setType(Message.MT_BOGGLE_NEW_WORD);
+        message.setFromID(myInfo.getID());
+        message.setText(word);
+        socketThread.sendMessage(message);
+    }
+
     public void gameOverRequest()
     {
         Message message = new Message();
@@ -565,40 +590,48 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener, 
         switch (message.getType())
         {
             case Message.MT_ID_UPDATE:
-                logger.debug("MT_ID_UPDATE: " + message.getVal());
-                myInfo.setID(message.getVal());
-                chatBoxPanel.updatePlayerStyle(myInfo);
+                {
+                    logger.debug("MT_ID_UPDATE: " + message.getVal());
+                    myInfo.setID(message.getVal());
+                    chatBoxPanel.updatePlayerStyle(myInfo);
+                }
                 break;
             case Message.MT_NEW_PLAYER:
             case Message.MT_PLAYER_LIST:
-                logger.debug("MT_PLAYER: " + message.getPlayerInfo().toString());
-                if (message.getFromID() != myInfo.getID())
                 {
-                    PlayerInfo info = new PlayerInfo(message.getPlayerInfo());
-                    info.setID(message.getFromID());
-                    players.add(info);
-                    playerPanel.addPlayer(info);
-                    chatBoxPanel.updatePlayerStyle(info);
-                    if (twenty48Panel != null)
-                        twenty48Panel.updatePlayerRoom(info);
+                    logger.debug("MT_PLAYER: " + message.getPlayerInfo().toString());
+                    if (message.getFromID() != myInfo.getID())
+                    {
+                        PlayerInfo info = new PlayerInfo(message.getPlayerInfo());
+                        info.setID(message.getFromID());
+                        players.add(info);
+                        playerPanel.addPlayer(info);
+                        chatBoxPanel.updatePlayerStyle(info);
+                        if (twenty48Panel != null)
+                            twenty48Panel.updatePlayerRoom(info);
+                    }
                 }
                 break;
             case Message.MT_PLAYER_CLOSED:
-                logger.debug("MT_PLAYER_CLOSED: " + fromPlayer.toString());
-                players.remove(fromPlayer);
-                playerPanel.removePlayer(fromPlayer);
-                if (twenty48Panel != null)
-                    twenty48Panel.updatePlayerRoom(null);
+                {
+                    logger.debug("MT_PLAYER_CLOSED: " + fromPlayer.toString());
+                    players.remove(fromPlayer);
+                    playerPanel.removePlayer(fromPlayer);
+                    if (twenty48Panel != null)
+                        twenty48Panel.updatePlayerRoom(null);
+                }
                 break;
             case Message.MT_PLAYER_INFO_CHANGE:
-                logger.debug("MT_PLAYER_INFO_CHANGE: " + message.getPlayerInfo().toString());
-                fromPlayer.setName(message.getPlayerInfo().getName());
-                fromPlayer.setIconID(message.getPlayerInfo().getIconID());
-                playerPanel.updatePlayer(fromPlayer);
-                chatBoxPanel.updatePlayerStyle(fromPlayer);
-                if (twenty48Panel != null)
                 {
-                    twenty48Panel.updatePlayerStyle(fromPlayer);
+                    logger.debug("MT_PLAYER_INFO_CHANGE: " + message.getPlayerInfo().toString());
+                    fromPlayer.setName(message.getPlayerInfo().getName());
+                    fromPlayer.setIconID(message.getPlayerInfo().getIconID());
+                    playerPanel.updatePlayer(fromPlayer);
+                    chatBoxPanel.updatePlayerStyle(fromPlayer);
+                    if (twenty48Panel != null)
+                    {
+                        twenty48Panel.updatePlayerStyle(fromPlayer);
+                    }
                 }
                 break;
             case Message.MT_PLAYER_ROOM_CHANGE:
@@ -651,16 +684,29 @@ public class GameFrame extends JFrame implements ActionListener, MouseListener, 
                 }
                 break;
             case Message.MT_CHAT:
-                logger.debug("MT_CHAT (" + fromPlayer.toString() + "): " + message.getText());
-                chatBoxPanel.addChat(fromPlayer, message.getText());
+                {
+                    logger.debug("MT_CHAT (" + fromPlayer.toString() + "): " + message.getText());
+                    chatBoxPanel.addChat(fromPlayer, message.getText());
+                }
                 break;
             case Message.MT_PLAYER_SHOWING_GAME:
-                logger.debug("MT_PLAYER_SHOWING_GAME (" + fromPlayer.toString() + "): " + message.getVal());
-                fromPlayer.setShowing(message.getVal());
-                playerPanel.updatePlayer(fromPlayer);
-                if (twenty48Panel != null)
                 {
-                    twenty48Panel.updatePlayerStyle(fromPlayer);
+                    logger.debug("MT_PLAYER_SHOWING_GAME (" + fromPlayer.toString() + "): " + message.getVal());
+                    fromPlayer.setShowing(message.getVal());
+                    playerPanel.updatePlayer(fromPlayer);
+                    if (twenty48Panel != null)
+                    {
+                        twenty48Panel.updatePlayerStyle(fromPlayer);
+                    }
+                }       
+                break;
+            case Message.MT_BOGGLE_NEW_WORD:
+                {
+                    logger.debug("MT_BOGGLE_NEW_WORD (" + fromPlayer.toString() + "): " + message.getText());
+                    if (bogglePanel != null)
+                    {
+                        bogglePanel.newWord(fromPlayer, message.getText());
+                    }
                 }
                 break;
             default:

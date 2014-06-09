@@ -10,13 +10,13 @@ import bwyatt.game.common.*;
 
 public class ChatBoxPanel extends JPanel
 {
-    JTextPane textPane;
-    JScrollPane scrollPane;
-    Style defaultStyle;
-    Style regularStyle;
-    Style boldStyle;
-    HashMap<PlayerInfo, Style> playerStyles;
-    LinkedList<Chat> chatList;
+    private JTextPane textPane;
+    private JScrollPane scrollPane;
+    private Style defaultStyle;
+    private Style regularStyle;
+    private Style boldStyle;
+    private HashMap<PlayerInfo, Style> playerStyles;
+    private LinkedList<Chat> chatList;
 
     public ChatBoxPanel()
     {

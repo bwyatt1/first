@@ -15,10 +15,12 @@ public class Twenty48Panel extends JPanel implements ActionListener
     private HashMap<PlayerInfo, Twenty48BoardPanel> otherBoards;
     private JPanel otherBoardsPanel;
     private int gameOn;
-    private JRadioButton[] multiRadio;
+    private JRadioButton[] roomRadio;
+    private JRadioButton soloRadio;
+    private JRadioButton multiRadio;
     private JCheckBox readyBox;
     private JTextArea multiPlayersPane;
-    private JButton multiStartButton;
+    private JButton startButton;
     private JLabel timerLabel;
     private javax.swing.Timer timer;
     private Room[] multiRoom;
@@ -108,59 +110,79 @@ public class Twenty48Panel extends JPanel implements ActionListener
         this.myBoardPanel = null;
         this.removeAll();
 
-        JLabel soloLabel = new JLabel("Solo");
-        soloLabel.setIcon(ImageCache.getTwenty48Tile(10));
-        soloLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        soloLabel.setOpaque(false);
-        soloLabel.addMouseListener(new MouseAdapter()
-            {
-                public void mouseClicked(MouseEvent e)
-                {
-                    startSoloGame();
-                }
-            }
-        );
+        JPanel autoPanel = new JPanel();
+        autoPanel.setOpaque(false);
+
+        JPanel modePanel = new JPanel();
+        modePanel.setOpaque(false);
+        soloRadio = new JRadioButton("Solo");
+        multiRadio = new JRadioButton("Multiplayer");
+        soloRadio.addActionListener(this);
+        multiRadio.addActionListener(this);
+        soloRadio.setOpaque(false);
+        multiRadio.setOpaque(false);
+        ButtonGroup modeGroup = new ButtonGroup();
+        modeGroup.add(soloRadio);
+        modeGroup.add(multiRadio);
+        modePanel.add(soloRadio);
+        modePanel.add(multiRadio);
+        soloRadio.setSelected(true);
 
         multiRoom = new Room[3];
         multiRoom[0] = Room.ONE_MINUTE;
         multiRoom[1] = Room.THREE_MINUTES;
-        multiRoom[2] = Room.TEN_MINUTES;
+        multiRoom[2] = Room.INFINITY;
 
-        JPanel multiPanel = new JPanel();
-        JPanel buttonPanel = new JPanel();
-        multiRadio = new JRadioButton[3];
-        multiRadio[0] = new JRadioButton("1:00");
-        multiRadio[1] = new JRadioButton("3:00");
-        multiRadio[2] = new JRadioButton("10:00");
-        ButtonGroup buttonGroup = new ButtonGroup();
+        JPanel roomPanel = new JPanel();
+        roomPanel.setOpaque(false);
+        roomRadio = new JRadioButton[3];
+        roomRadio[0] = new JRadioButton("1:00");
+        roomRadio[1] = new JRadioButton("3:00");
+        roomRadio[2] = new JRadioButton("No Time");
+        ButtonGroup roomGroup = new ButtonGroup();
         for (int i = 0; i < 3; ++i)
         {
             if (currentRoomID == multiRoom[i].getID())
-                multiRadio[i].setSelected(true);
-            multiRadio[i].addActionListener(this);
-            buttonGroup.add(multiRadio[i]);
-            buttonPanel.add(multiRadio[i]);
+                roomRadio[i].setSelected(true);
+            roomRadio[i].addActionListener(this);
+            roomRadio[i].setOpaque(false);
+            roomGroup.add(roomRadio[i]);
+            roomPanel.add(roomRadio[i]);
         }
 
         multiPlayersPane = new JTextArea();
+        multiPlayersPane.setPreferredSize(new Dimension(300, 200));
+        multiPlayersPane.setMaximumSize(multiPlayersPane.getPreferredSize());
         updateMultiTextArea();
         multiPlayersPane.setEditable(false);
-        readyBox = new JCheckBox("Ready");
-        readyBox.addActionListener(this);
-        multiStartButton = new JButton("Start Multiplayer");
-        multiStartButton.addActionListener(this);
 
-        BoxLayout multiLayout = new BoxLayout(multiPanel, BoxLayout.Y_AXIS);
-        multiPanel.setLayout(multiLayout);
-        multiPanel.add(buttonPanel);
-        multiPanel.add(multiPlayersPane);
-        multiPanel.add(readyBox);
-        multiPanel.add(multiStartButton);
-        multiPanel.setOpaque(false);
+        JPanel goPanel = new JPanel();
+        goPanel.setOpaque(false);
+        readyBox = new JCheckBox("Ready");
+        readyBox.setOpaque(false);
+        readyBox.addActionListener(this);
+        startButton = new JButton("Start");
+        startButton.addActionListener(this);
+        goPanel.add(readyBox);
+        goPanel.add(startButton);
+
+
+        JPanel optionsPanel = new JPanel();
+        optionsPanel.setOpaque(false);
+        optionsPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = 0;
+        optionsPanel.add(modePanel, gbc);
+        gbc.gridy++;
+        optionsPanel.add(roomPanel, gbc);
+        gbc.gridy++;
+        optionsPanel.add(multiPlayersPane, gbc);
+        gbc.gridy++;
+        optionsPanel.add(goPanel, gbc);
 
         this.setLayout(new GridLayout(1, 2));
-        this.add(soloLabel);
-        this.add(multiPanel);
+        this.add(autoPanel);
+        this.add(optionsPanel);
 
         this.setOpaque(false);
         this.revalidate();
@@ -211,11 +233,6 @@ public class Twenty48Panel extends JPanel implements ActionListener
         this.repaint();
 
         this.requestFocusInWindow();
-    }
-
-    public void newMultiRequest()
-    {
-        parent.newMultiRequest();
     }
 
     /*
@@ -398,15 +415,22 @@ public class Twenty48Panel extends JPanel implements ActionListener
         {
             parent.myRoomUpdate(currentRoomID, readyBox.isSelected());
         }
-        else if (e.getSource() == multiStartButton)
+        else if (e.getSource() == startButton)
         {
-            newMultiRequest();
+            if (soloRadio.isSelected())
+            {
+                startSoloGame();
+            }
+            else
+            {
+                parent.newMultiRequest();
+            }
         }
         else
         {
             for (int i = 0; i < multiRoom.length; ++i)
             {
-                if (e.getSource() == multiRadio[i] && currentRoomID != multiRoom[i].getID())
+                if (e.getSource() == roomRadio[i] && currentRoomID != multiRoom[i].getID())
                 {
                     currentRoomID = multiRoom[i].getID();
                     updateMultiTextArea();

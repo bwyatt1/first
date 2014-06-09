@@ -32,16 +32,25 @@ public class Twenty48AnimationTask implements ActionListener
         this.movePanel = movePanel;
         tileLabel = new JLabel[moves.size()];
         int i = 0;
-        this.moveDelta = (81 + 5) / FRAMES;
+        this.moveDelta = -1;
         movePanel.setLayout(null);
         for (TileMove move : moves)
         {
+            if (this.moveDelta == -1)
+            {
+                if (move.getDir() == TileMove.LEFT || move.getDir() == TileMove.RIGHT)
+                    this.moveDelta = 108 / FRAMES;
+                else
+                    this.moveDelta = 107 / FRAMES;
+            }
             tileLabel[i] = new JLabel();
+            tileLabel[i].setHorizontalAlignment(SwingConstants.CENTER);
+            tileLabel[i].setVerticalAlignment(SwingConstants.CENTER);
             tileLabel[i].setIcon(ImageCache.getTwenty48Tile(move.getVal()));
             tileLabel[i].setSize(tileLabel[i].getPreferredSize());
             movePanel.add(tileLabel[i]);
-            int xloc = (81+5) * move.getCol();
-            int yloc = (81+5) * move.getRow();
+            int xloc = 108 * move.getCol();
+            int yloc = 107 * move.getRow();
             tileLabel[i].setLocation(xloc, yloc);
             ++i;
         }

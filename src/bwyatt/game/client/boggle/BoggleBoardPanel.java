@@ -224,11 +224,13 @@ public class BoggleBoardPanel extends JLayeredPane implements MouseMotionListene
 
     public void hiClear()
     {
-        for (Point p : hiPath)
+        while (hiPath.size() > 0)
         {
+            Point p = hiPath.removeLast();
             hiLabel[p.y][p.x].setIcon(null);
+            if (hiPath.size() > 0)
+                getEdgeLabel(p, hiPath.getLast()).setVisible(false);
         }
-        hiPath.clear();
     }
 
     public boolean contains(String word)

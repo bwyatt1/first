@@ -22,15 +22,15 @@ public class ImageCache
     protected ImageIcon boggleHiEdgeD2;
     protected ImageIcon[] twenty48Tiles;
     protected ImageIcon[] twenty48Thumbs;
-    protected ImageIcon twenty48Blank;
-    protected ImageIcon twenty48BlankThumb;
     protected ImageIcon twenty48Board;
     protected ImageIcon twenty48BoardThumb;
     protected ImageIcon[] playerIcons;
     protected ImageIcon[] statusIcons;
+    protected ImageIcon navBackground;
     protected ImageIcon backIcon;
     protected ImageIcon homeIcon;
     protected ImageIcon settingsIcon;
+    protected ImageIcon[] roomIcons;
 
     /*
      * Some images fit nicely into combo PNGs, others do not
@@ -40,13 +40,13 @@ public class ImageCache
         BufferedImage bufferedImage;
         Graphics2D graphics;
 
-        mainBackground = new ImageIcon(this.getClass().getResource("resource/main_background.png"));
+        mainBackground = new ImageIcon(this.getClass().getResource("resource/Wood_background.png"));
 
         largeLetters = new ImageIcon[26];
         smallLetters = new ImageIcon[26];
         
-        BufferedImage boggleLargeLetters = ImageIO.read(this.getClass().getResource("resource/BL_96.png"));
-        BufferedImage boggleSmallLetters = ImageIO.read(this.getClass().getResource("resource/BL_48.png"));
+        BufferedImage boggleLargeLetters = ImageIO.read(this.getClass().getResource("resource/Wood_Letters_96.png"));
+        BufferedImage boggleSmallLetters = ImageIO.read(this.getClass().getResource("resource/Wood_Letters_48.png"));
         for (int i = 0; i < 26; ++i)
         {
             bufferedImage = new BufferedImage(96, 96, BufferedImage.TYPE_INT_ARGB);
@@ -56,25 +56,30 @@ public class ImageCache
             bufferedImage.createGraphics().drawImage(boggleSmallLetters, null, -i*48, 0);
             smallLetters[i] = new ImageIcon(bufferedImage);
         }
-        boggleBoard = new ImageIcon(this.getClass().getResource("resource/B_Board.png"));
-        boggleHi1 = new ImageIcon(this.getClass().getResource("resource/B_Hi1.png"));
-        boggleHi2 = new ImageIcon(this.getClass().getResource("resource/B_Hi2.png"));
+        boggleBoard = new ImageIcon(this.getClass().getResource("resource/Wood_board.png"));
+        boggleHi1 = new ImageIcon(this.getClass().getResource("resource/Wood_Hi1.png"));
+        boggleHi2 = new ImageIcon(this.getClass().getResource("resource/Wood_Hi2.png"));
         boggleHiEdgeV = new ImageIcon(this.getClass().getResource("resource/B_Hi_V.png"));
         boggleHiEdgeH = new ImageIcon(this.getClass().getResource("resource/B_Hi_H.png"));
         boggleHiEdgeD1 = new ImageIcon(this.getClass().getResource("resource/B_Hi_D1.png"));
         boggleHiEdgeD2 = new ImageIcon(this.getClass().getResource("resource/B_Hi_D2.png"));
 
+        BufferedImage twenty48AllTiles = ImageIO.read(this.getClass().getResource("resource/Wood_T_96.png"));
+        BufferedImage twenty48AllThumbs = ImageIO.read(this.getClass().getResource("resource/Wood_T_48.png"));
+
         twenty48Tiles = new ImageIcon[13];
         twenty48Thumbs = new ImageIcon[13];
         for (int i = 0; i < 12; ++i)
         {
-            twenty48Tiles[i] = new ImageIcon(this.getClass().getResource("resource/T" + i + ".png"));
-            twenty48Thumbs[i] = new ImageIcon(this.getClass().getResource("resource/T" + i + "_40.png"));
+            bufferedImage = new BufferedImage(96, 96, BufferedImage.TYPE_INT_ARGB);
+            bufferedImage.createGraphics().drawImage(twenty48AllTiles, null, -i*96, 0);
+            twenty48Tiles[i] = new ImageIcon(bufferedImage);
+            bufferedImage = new BufferedImage(48, 48, BufferedImage.TYPE_INT_ARGB);
+            bufferedImage.createGraphics().drawImage(twenty48AllThumbs, null, -i*48, 0);
+            twenty48Thumbs[i] = new ImageIcon(bufferedImage);
         }
-        twenty48Blank = new ImageIcon(this.getClass().getResource("resource/T_Blank.png"));
-        twenty48Board = new ImageIcon(this.getClass().getResource("resource/T_Board.png"));
+        twenty48Board = new ImageIcon(this.getClass().getResource("resource/Wood_board.png"));
         twenty48BoardThumb = new ImageIcon(this.getClass().getResource("resource/T_Board_174.png"));
-        twenty48BlankThumb = new ImageIcon(this.getClass().getResource("resource/T_Blank_40.png"));
 
         String[] playerIconNames = {"Red", "Orange", "Pink", "Green", "Blue"};
         playerIcons = new ImageIcon[playerIconNames.length];
@@ -90,7 +95,8 @@ public class ImageCache
             statusIcons[i] = new ImageIcon(this.getClass().getResource("resource/PS_" + statusIconNames[i] + ".png"));
         }
 
-        BufferedImage navIcons = ImageIO.read(this.getClass().getResource("resource/nav.png"));
+        navBackground = new ImageIcon(this.getClass().getResource("resource/Wood_nav_back.png"));
+        BufferedImage navIcons = ImageIO.read(this.getClass().getResource("resource/Wood_nav_icon.png"));
         bufferedImage = new BufferedImage(48, 48, BufferedImage.TYPE_INT_ARGB);
         graphics = bufferedImage.createGraphics();
         graphics.drawImage(navIcons, null, 0, 0);
@@ -103,6 +109,15 @@ public class ImageCache
         graphics = bufferedImage.createGraphics();
         graphics.drawImage(navIcons, null, -96, 0);
         settingsIcon = new ImageIcon(bufferedImage);
+
+        BufferedImage roomAllIcons = ImageIO.read(this.getClass().getResource("resource/Wood_rooms.png"));
+        roomIcons = new ImageIcon[3];
+        for (int i = 0; i < 3; ++i)
+        {
+            bufferedImage = new BufferedImage(48, 48, BufferedImage.TYPE_INT_ARGB);
+            bufferedImage.createGraphics().drawImage(roomAllIcons, null, -i*48, 0);
+            roomIcons[i] = new ImageIcon(bufferedImage);
+        }
     }
 
     public static void init()
@@ -150,16 +165,6 @@ public class ImageCache
     public static ImageIcon getTwenty48BoardThumb()
     {
         return instance.twenty48BoardThumb;
-    }
-
-    public static ImageIcon getTwenty48Blank()
-    {
-        return instance.twenty48Blank;
-    }
-
-    public static ImageIcon getTwenty48BlankThumb()
-    {
-        return instance.twenty48BlankThumb;
     }
 
     public static ImageIcon getPlayerIcon(int i)
@@ -225,5 +230,15 @@ public class ImageCache
     public static ImageIcon getMainBackground()
     {
         return instance.mainBackground;
+    }
+
+    public static ImageIcon getNavBackground()
+    {
+        return instance.navBackground;
+    }
+
+    public static ImageIcon getRoomIcon(int i)
+    {
+        return instance.roomIcons[i];
     }
 }

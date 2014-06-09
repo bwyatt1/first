@@ -12,6 +12,7 @@ public class Room
     public static final Room ONE_MINUTE = new Room(1, 60);
     public static final Room THREE_MINUTES = new Room(3, 180);
     public static final Room TEN_MINUTES = new Room(10, 600);
+    public static final Room INFINITY = new Room(6, 0);
 
 
     protected Room(int id, int duration)
@@ -26,6 +27,7 @@ public class Room
         roomList.add(ONE_MINUTE);
         roomList.add(THREE_MINUTES);
         roomList.add(TEN_MINUTES);
+        roomList.add(INFINITY);
     }
 
     public static Room getRoomFromID(int id)

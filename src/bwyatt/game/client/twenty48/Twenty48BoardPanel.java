@@ -5,6 +5,7 @@ import java.awt.event.*;
 import java.util.*;
 import javax.swing.*;
 import javax.swing.border.*;
+import org.apache.log4j.Logger;
 
 import bwyatt.game.client.*;
 import bwyatt.game.common.*;
@@ -22,6 +23,8 @@ public class Twenty48BoardPanel extends JPanel
     private int panelSize;
     private int highTile;
 
+    private static Logger logger = Logger.getLogger(Twenty48BoardPanel.class.getName());
+
     public static final int SIZE_NORMAL = 0;
     public static final int SIZE_THUMB = 1;
 
@@ -36,29 +39,32 @@ public class Twenty48BoardPanel extends JPanel
         JLayeredPane layeredPane = new JLayeredPane();
         JLabel background = new JLabel(ImageCache.getTwenty48Board());
         JPanel tilePanel = new JPanel();
-        tilePanel.setLayout(new GridLayout(4, 4, 5, 5));
+        tilePanel.setLayout(new GridLayout(4, 4, 0, 0));
         tileLabel = new JLabel[4][];
         for (int row = 0; row < 4; ++row)
         {
             tileLabel[row] = new JLabel[4];
             for (int col = 0; col < 4; ++col)
             {
-                tileLabel[row][col] = new JLabel(ImageCache.getTwenty48Blank());
+                tileLabel[row][col] = new JLabel();
+                tileLabel[row][col].setHorizontalAlignment(SwingConstants.CENTER);
+                tileLabel[row][col].setVerticalAlignment(SwingConstants.CENTER);
                 tilePanel.add(tileLabel[row][col]);
             }
         }
         movePanel = new JPanel();
         
         layeredPane.setPreferredSize(background.getPreferredSize());
-        background.setSize(background.getPreferredSize());
+        Dimension max = background.getPreferredSize();
+        background.setSize(max);
         background.setLocation(0, 0);
         layeredPane.add(background, new Integer(0));
-        tilePanel.setLocation(5, 5);
-        tilePanel.setSize(tilePanel.getPreferredSize());
+        tilePanel.setLocation(6, 10);
+        tilePanel.setSize(new Dimension(max.width-20, max.height-24));
         tilePanel.setOpaque(false);
         layeredPane.add(tilePanel, new Integer(1), 0);
-        movePanel.setLocation(5, 5);
-        movePanel.setSize(tilePanel.getPreferredSize());
+        movePanel.setLocation(11, 15);
+        movePanel.setSize(tilePanel.getSize());
         movePanel.setOpaque(false);
         layeredPane.add(movePanel, new Integer(2), 0);
 
@@ -120,7 +126,7 @@ public class Twenty48BoardPanel extends JPanel
                 int value = twenty48Board.getTile(row, col);
                 if (value == -1)
                 {
-                    tileLabel[row][col].setIcon(ImageCache.getTwenty48Blank());
+                    tileLabel[row][col].setIcon(null);
                 }
                 else
                 {
@@ -180,10 +186,12 @@ public class Twenty48BoardPanel extends JPanel
     {
 
         // movePanel is intialized, update the blank tiles underneath it and queue the soundFX
+        // playing multiple simultaneous sounds has been buggy, restricting to the highest pop per move
         LinkedList<Integer> playPop = new LinkedList<Integer>();
+        int hiVal = -1;
         for (TileMove move : moves)
         {
-            tileLabel[move.getRow()][move.getCol()].setIcon(ImageCache.getTwenty48Blank());
+            tileLabel[move.getRow()][move.getCol()].setIcon(null);
             int dir = move.getDir();
             int val = move.getVal();
             int row = move.getRow();
@@ -194,9 +202,12 @@ public class Twenty48BoardPanel extends JPanel
                 (dir == TileMove.UP && val != twenty48Board.getTile(row-dist, col)) ||
                 (dir == TileMove.DOWN && val != twenty48Board.getTile(row+dist, col)))
             {
-                playPop.add(new Integer(val));
+                if (val > hiVal)
+                    hiVal = val;
             }
         }
+        if (hiVal > -1)
+            playPop.add(new Integer(hiVal));
 
         Twenty48AnimationTask task = new Twenty48AnimationTask(moves, movePanel, this);
         task.setPlayPop(playPop);
